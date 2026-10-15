@@ -94,9 +94,9 @@ table.res td:first-child{color:var(--red);font-family:var(--fd)} table.res td:la
 .keys{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;font-size:15px;color:var(--mute);line-height:1.7}
 kbd{font-family:var(--fd);font-size:11px;background:#2a2f47;color:var(--ink);border:2px solid #000;border-bottom-width:4px;padding:1px 5px;white-space:nowrap}
 .touch{display:none;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:12px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
-.touch .pad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,54px);gap:6px}
-.touch .acts{display:grid;grid-template-columns:repeat(3,72px);gap:6px}
-.tb{font-family:var(--fd);font-size:11px;border:3px solid #000;background:#2a2f47;color:var(--ink);display:flex;align-items:center;justify-content:center;height:54px;box-shadow:0 3px 0 #000;touch-action:none}
+.touch .pad{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,54px);gap:6px}
+.touch .acts{display:grid;grid-template-columns:repeat(3,58px);gap:6px}
+.tb{font-family:var(--fd);font-size:10px;border:3px solid #000;background:#2a2f47;color:var(--ink);display:flex;align-items:center;justify-content:center;height:54px;box-shadow:0 3px 0 #000;touch-action:none}
 .tb.on{background:var(--gold);color:#111}
 .tb.sp{background:#6b2fb3}
 .tb.pz{background:#151826}
@@ -209,12 +209,9 @@ body.touchmode.fighting .touch{display:flex}
       <div></div><div class="tb" data-act="u">▲</div><div></div>
       <div class="tb" data-act="l">◀</div><div class="tb" data-act="d">▼</div><div class="tb" data-act="r">▶</div>
     </div>
-    <div class="mid">
-      <div class="tb pz" data-act="pause">II</div>
-    </div>
     <div class="acts">
       <div class="tb" data-act="p">PUÑO</div><div class="tb" data-act="k">PATADA</div><div class="tb" data-act="b">GUARDIA</div>
-      <div class="tb" data-act="t">DERRIBO</div><div class="tb sp" data-act="s">ESPECIAL</div>
+      <div class="tb" data-act="t">DERRIBO</div><div class="tb sp" data-act="s">ESPECIAL</div><div class="tb pz" data-act="pause">II</div>
     </div>
   </div>
 
@@ -295,9 +292,9 @@ const ROSTER = [
     stats:{ punch:0.95, kick:1.35, td:0.75, sub:0.7, speed:1.15, chin:1.05, cardio:1.0 },
     sp:{ name:"PATADA GIRATORIA", kind:"strike", st:12, ac:5, rc:16, range:35, dmg:27, hs:30, kb:4.5, knock:true, unblock:true, pose:"spin", big:true, sta:22 } },
   { id:"espanol", name:"«El Español» Fernández", short:"ESPAÑOL", style:"Boxeo y defensa personal", cls:"Wélter", kg:77, build:0,
-    desc:"De Collado Villalba, 1,70 m y fuerte. Diez años de jefe de equipo en seguridad: no se arruga y aguanta lo que le echen.",
+    desc:"De Collado Villalba, 1,70 m y fuerte. Diez años de jefe de equipo en seguridad: el mentón más duro de la jaula, rapidísimo y no se cansa nunca.",
     skin:"#dcae88", hair:"#2b1d14", shorts:"#c60b1e", trim:"#ffc400", gloves:"#ffc400", alt:"#1b1b1b",
-    stats:{ punch:1.2, kick:1.0, td:1.15, sub:1.05, speed:1.05, chin:0.86, cardio:1.15 },
+    stats:{ punch:1.15, kick:1.0, td:1.1, sub:1.0, speed:1.25, chin:0.72, cardio:1.5 },
     sp:{ name:"DERECHAZO DE VILLALBA", kind:"strike", st:11, ac:4, rc:16, range:25, dmg:31, hs:30, kb:4, knock:true, unblock:true, pose:"punch", big:true, sta:22, ko:0.14 } },
   { id:"rush", name:"«Rush» Saint-Laurent", short:"RUSH", style:"Kárate y lucha", cls:"Wélter", kg:77, build:0,
     desc:"Canadiense, leyenda del wélter. El mejor derribando de la jaula y con un cardio que no se acaba.",
