@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Octágono Pixel: juego de MMA en pixel art. Contra la CPU o a dos jugadores.">
+<title>Octágono Pixel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=Silkscreen:wght@400;700&display=swap">
+<style>
+html,body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: una jaula 16:9 en el centro; menús encima en escritorio y debajo en el móvil; controles abajo. */
+:root{
+  --bg:#0b0d14; --panel:#151826; --line:#2b3048; --ink:#f3efe6; --mute:#a3a9bf;
+  --gold:#f2c14e; --red:#e0443e; --blue:#4a8dff;
+  --fd:"Silkscreen", "Courier New", monospace;
+  --fb:"Pixelify Sans", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:16px;line-height:1.4}
+.wrap{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:16px 40px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.top h1{font-family:var(--fd);font-size:22px;margin:0;letter-spacing:1px;color:var(--gold);text-shadow:3px 3px 0 #000}
+.top h1 span{color:var(--red)}
+.top .tag{color:var(--mute);font-size:15px}
+.iconbtn{font-family:var(--fd);font-size:12px;background:#22263a;color:var(--ink);border:3px solid #000;padding:6px 10px;cursor:pointer}
+.stage{position:relative;width:100%;aspect-ratio:16/9;background:#000;border:3px solid #000;box-shadow:0 0 0 3px var(--line), 0 12px 0 rgba(0,0,0,.35)}
+#cv{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  background:rgba(7,8,13,.74);padding:16px;overflow:auto;text-align:center}
+.ov h2{font-family:var(--fd);font-size:28px;margin:0;color:var(--gold);text-shadow:3px 3px 0 #000;text-wrap:balance;line-height:1.15}
+.ov p{margin:0;color:var(--mute);max-width:56ch}
+.logo{font-family:var(--fd);font-weight:700;font-size:44px;line-height:1;color:var(--gold);text-shadow:4px 4px 0 #000,-2px -2px 0 var(--red)}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.btn{font-family:var(--fd);font-size:15px;padding:10px 16px;border:3px solid #000;background:var(--gold);color:#1d1400;cursor:pointer;
+  box-shadow:inset -3px -3px 0 rgba(0,0,0,.28), 0 4px 0 #000;transition:transform .05s}
+.btn:active{transform:translateY(3px);box-shadow:inset -3px -3px 0 rgba(0,0,0,.28), 0 1px 0 #000}
+.btn.alt{background:#2a2f47;color:var(--ink)}
+.btn.red{background:var(--red);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.card:focus-visible,.chip:focus-visible,.iconbtn:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.chips{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}
+.chips span{color:var(--mute);font-size:14px;margin-right:4px}
+.chip{font-family:var(--fd);font-size:12px;padding:6px 10px;border:3px solid #000;background:#22263a;color:var(--mute);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:#111}
+.roster{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;width:100%;max-width:860px}
+.card{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px 6px;background:var(--panel);
+  border:3px solid #000;box-shadow:0 0 0 2px var(--line);color:var(--ink);font-family:var(--fd);font-size:10px;cursor:pointer;min-width:0}
+.card canvas{width:100%;max-width:64px;aspect-ratio:48/52;image-rendering:pixelated;background:linear-gradient(#262b42,#1a1d2c)}
+.card span.nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card span.kg{font-family:var(--fb);font-size:11px;color:var(--mute)}
+.card.p1{box-shadow:0 0 0 3px var(--red)} .card.p2{box-shadow:0 0 0 3px var(--blue)} .card.p1.p2{box-shadow:0 0 0 3px var(--red),0 0 0 6px var(--blue)}
+.badge{position:absolute;top:2px;font-family:var(--fd);font-size:9px;padding:1px 3px;border:2px solid #000}
+.badge.b1{left:2px;background:var(--red);color:#fff} .badge.b2{right:2px;background:var(--blue);color:#fff}
+.detail{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:6px 18px;width:100%;max-width:860px;background:var(--panel);
+  border:3px solid #000;box-shadow:0 0 0 2px var(--line);padding:10px 14px;text-align:left}
+.detail h3{margin:0;font-family:var(--fd);font-size:16px;color:var(--gold)}
+.detail .cls{display:inline-block;margin-top:4px;font-family:var(--fd);font-size:11px;background:#2a2f47;border:2px solid #000;padding:1px 6px}
+.detail p{margin:6px 0 0;color:var(--mute);font-size:14px;line-height:1.3}
+.stats{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 8px;font-size:13px;color:var(--mute);align-items:center}
+.bar{height:7px;background:#0c0e17;border:1px solid #000}
+.bar > div{height:100%;background:var(--gold)}
+.pick-msg{font-family:var(--fd);font-size:16px}
+.pick-msg .c1{color:var(--red)} .pick-msg .c2{color:var(--blue)}
+.cards{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.judge{background:var(--panel);border:3px solid #000;padding:6px 12px;font-family:var(--fd);font-size:13px;font-variant-numeric:tabular-nums}
+.judge em{display:block;font-style:normal;color:var(--mute);font-family:var(--fb);font-size:12px}
+table.res{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}
+table.res th,table.res td{padding:3px 10px;border-bottom:2px solid var(--line)}
+table.res th{color:var(--mute);font-weight:400}
+table.res td:first-child{color:var(--red);font-family:var(--fd)} table.res td:last-child{color:var(--blue);font-family:var(--fd)}
+.help{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:22px}
+.help section{background:var(--panel);border:3px solid #000;box-shadow:0 0 0 2px var(--line);padding:12px 14px;min-width:0}
+.help h3{font-family:var(--fd);font-size:14px;margin:0 0 8px;color:var(--gold)}
+.help ul{margin:0;padding-left:18px;color:var(--mute);font-size:15px}
+.help li{margin:3px 0}
+.keys{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;font-size:15px;color:var(--mute);line-height:1.7}
+kbd{font-family:var(--fd);font-size:11px;background:#2a2f47;color:var(--ink);border:2px solid #000;border-bottom-width:4px;padding:1px 5px;white-space:nowrap}
+.touch{display:none;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:12px;user-select:none;-webkit-user-select:none;touch-action:none}
+.touch .pad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,54px);gap:6px}
+.touch .acts{display:grid;grid-template-columns:repeat(3,72px);gap:6px}
+.tb{font-family:var(--fd);font-size:11px;border:3px solid #000;background:#2a2f47;color:var(--ink);display:flex;align-items:center;justify-content:center;height:54px;box-shadow:0 3px 0 #000;touch-action:none}
+.tb.on{background:var(--gold);color:#111}
+.tb.sp{background:#6b2fb3}
+@media (pointer:coarse){.touch{display:flex}}
+@media (max-width:720px){
+  .stage{aspect-ratio:auto}
+  #cv{height:auto;aspect-ratio:16/9}
+  .ov{position:static;background:var(--panel);border-top:3px solid #000}
+  .roster{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .detail{grid-template-columns:1fr}
+  .help{grid-template-columns:1fr}
+  .logo{font-size:32px}
+  .ov h2{font-size:22px}
+}
+@media (prefers-reduced-motion:reduce){.btn{transition:none}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <div class="top">
+    <h1>OCTÁGONO <span>PIXEL</span></h1>
+    <div class="row">
+      <span class="tag">MMA 2D · 3 rounds de 5:00</span>
+      <button class="iconbtn" id="bMute" type="button">Sonido: sí</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="cv" width="320" height="180" aria-label="Combate de MMA"></canvas>
+
+    <div class="ov" id="scrTitle">
+      <div class="logo">OCTÁGONO<br>PIXEL</div>
+      <p>Peleas de MMA en la jaula. Golpea, derriba y somete. Gana por KO, por sumisión o a los puntos.</p>
+      <div class="row">
+        <button class="btn" id="b1p" type="button">1 jugador</button>
+        <button class="btn alt" id="b2p" type="button">2 jugadores</button>
+      </div>
+      <div class="chips" role="group" aria-label="Dificultad de la CPU">
+        <span>CPU:</span>
+        <button class="chip" type="button" id="dEasy" data-d="easy" aria-pressed="false">Fácil</button>
+        <button class="chip" type="button" id="dNormal" data-d="normal" aria-pressed="true">Normal</button>
+        <button class="chip" type="button" id="dHard" data-d="hard" aria-pressed="false">Difícil</button>
+      </div>
+    </div>
+
+    <div class="ov" id="scrSelect" hidden>
+      <div class="pick-msg" id="pickMsg"></div>
+      <div class="roster" id="roster"></div>
+      <div class="detail" id="detail"></div>
+      <div class="row">
+        <button class="btn alt" id="bBack" type="button">Atrás</button>
+        <button class="btn alt" id="bRandom" type="button">Rival al azar</button>
+        <button class="btn red" id="bFight" type="button" disabled>¡A la jaula!</button>
+      </div>
+    </div>
+
+    <div class="ov" id="scrPause" hidden>
+      <h2>PAUSA</h2>
+      <div class="row">
+        <button class="btn" id="bResume" type="button">Seguir</button>
+        <button class="btn alt" id="bQuit" type="button">Salir al menú</button>
+      </div>
+    </div>
+
+    <div class="ov" id="scrResult" hidden>
+      <h2 id="rTitle"></h2>
+      <p id="rHow"></p>
+      <div class="cards" id="rJudges"></div>
+      <table class="res" id="rStats"></table>
+      <div class="row">
+        <button class="btn red" id="bAgain" type="button">Revancha</button>
+        <button class="btn alt" id="bPick" type="button">Cambiar luchadores</button>
+        <button class="btn alt" id="bMenu" type="button">Menú</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="touch" id="touch" aria-hidden="true">
+    <div class="pad">
+      <div></div><div class="tb" data-act="u">▲</div><div></div>
+      <div class="tb" data-act="l">◀</div><div class="tb" data-act="d">▼</div><div class="tb" data-act="r">▶</div>
+    </div>
+    <div class="acts">
+      <div class="tb" data-act="p">PUÑO</div><div class="tb" data-act="k">PATADA</div><div class="tb" data-act="b">GUARDIA</div>
+      <div class="tb" data-act="t">DERRIBO</div><div class="tb sp" data-act="s">ESPECIAL</div>
+    </div>
+  </div>
+
+  <div class="help">
+    <section>
+      <h3>1 jugador</h3>
+      <div class="keys">
+        <span><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></span><span>Moverse por el octógono</span>
+        <span><kbd>A</kbd></span><span>Puñetazo</span>
+        <span><kbd>S</kbd></span><span>Patada</span>
+        <span><kbd>D</kbd></span><span>Derribo</span>
+        <span><kbd>F</kbd></span><span>Especial (barra morada llena)</span>
+        <span><kbd>Espacio</kbd></span><span>Guardia</span>
+      </div>
+    </section>
+    <section>
+      <h3>2 jugadores</h3>
+      <div class="keys">
+        <span>J1</span><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> moverse · <kbd>F</kbd> puño · <kbd>G</kbd> patada · <kbd>H</kbd> derribo · <kbd>T</kbd> especial · <kbd>Mayús izq.</kbd> guardia</span>
+        <span>J2</span><span>Flechas moverse · <kbd>,</kbd> puño · <kbd>.</kbd> patada · <kbd>-</kbd> derribo · <kbd>M</kbd> especial · <kbd>Mayús dcha.</kbd> guardia</span>
+        <span></span><span>Con teclado numérico, J2 también puede usar <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>, <kbd>Intro</kbd> y <kbd>0</kbd>.</span>
+      </div>
+    </section>
+    <section>
+      <h3>Cómo se gana</h3>
+      <ul>
+        <li>Para golpear tenéis que estar a la misma altura del octógono.</li>
+        <li>La guardia para los golpes, pero no los derribos.</li>
+        <li>Si golpeas al rival mientras arranca su ataque, haces un contragolpe (+30 %).</li>
+        <li>Con el rival en el suelo, el derribo te pone en la montada. Desde ahí, el puño golpea y la patada busca una llave de brazo.</li>
+        <li>Si te montan o te hacen una sumisión, machaca botones para escapar.</li>
+        <li>Cada golpe cansa (barra azul). Agotado no puedes pegar: retrocede o cúbrete para recuperar.</li>
+        <li>El peso cuenta: un pesado pega más fuerte a un pluma, pero se cansa antes.</li>
+        <li>Se gana por KO (a veces de un solo golpe), TKO si el árbitro para la pelea, o sumisión.</li>
+        <li>Si no hay KO, deciden tres jueces. <kbd>Esc</kbd> pausa.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const W = 320, H = 180, CX = 160, CY = 121, RX = 136, RZ = 42, ROUNDS = 3, ROUNDT = 60 * 60;
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+const $ = id => document.getElementById(id);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ---------- Luchadores ---------- */
+const ROSTER = [
+  { id:"matador", name:"«El Matador» Gorgadze", short:"MATADOR", style:"Boxeo y lucha", cls:"Pluma", kg:66, build:0,
+    desc:"Hispano-georgiano. Completo: pega como un pesado, derriba y no se cansa.",
+    skin:"#e2ae86", hair:"#16110d", shorts:"#c8102e", trim:"#ffc400", gloves:"#151515", alt:"#f2f2f2",
+    stats:{ punch:1.35, kick:1.0, td:1.1, sub:1.0, speed:1.12, chin:0.92, cardio:1.15 },
+    sp:{ name:"GANCHO DEL MATADOR", kind:"strike", st:11, ac:4, rc:16, range:24, dmg:30, hs:30, kb:4, knock:true, unblock:true, pose:"punch", big:true, sta:22 } },
+  { id:"aguila", name:"«Águila» Nurmagov", short:"ÁGUILA", style:"Sambo y lucha", cls:"Ligero", kg:70, build:0, beard:true,
+    desc:"Daguestaní. Te lleva al suelo, te monta y no te deja levantarte. Cardio infinito.",
+    skin:"#e9c2a0", hair:"#24170f", shorts:"#1b1b1b", trim:"#d4af37", gloves:"#1b1b1b", alt:"#7b1e1e",
+    stats:{ punch:0.95, kick:0.8, td:1.6, sub:1.3, speed:1.0, chin:0.9, cardio:1.45 },
+    sp:{ name:"LANZAMIENTO DE SAMBO", kind:"td", st:7, ac:8, rc:24, range:25, dmg:12, down:130, lunge:2.8, pose:"td", big:true, sta:22 } },
+  { id:"sombra", name:"«Sombra» Sato", short:"SOMBRA", style:"Kickboxing", cls:"Ligero", kg:70, build:0,
+    desc:"Rápido y con las piernas más largas de la jaula. En el suelo sufre.",
+    skin:"#ecc29a", hair:"#121212", shorts:"#2468d6", trim:"#e8f0ff", gloves:"#1b1b1b", alt:"#ffb000",
+    stats:{ punch:0.95, kick:1.35, td:0.75, sub:0.7, speed:1.15, chin:1.05, cardio:1.0 },
+    sp:{ name:"PATADA GIRATORIA", kind:"strike", st:12, ac:5, rc:16, range:35, dmg:27, hs:30, kb:4.5, knock:true, unblock:true, pose:"spin", big:true, sta:22 } },
+  { id:"relampago", name:"«Relámpago» Duarte", short:"RELÁMPAGO", style:"Muay thai", cls:"Mosca", kg:57, build:-1,
+    desc:"El más rápido y el que más aguanta corriendo. Le falta pegada.",
+    skin:"#b97a4c", hair:"#2a1a10", shorts:"#f2f2f2", trim:"#1d9a50", gloves:"#1d9a50", alt:"#ff8a00",
+    stats:{ punch:0.8, kick:1.05, td:0.95, sub:1.15, speed:1.3, chin:1.12, cardio:1.4 },
+    sp:{ name:"RODILLAZO VOLADOR", kind:"strike", st:9, ac:6, rc:14, range:30, dmg:24, hs:30, kb:4, lunge:3, knock:true, unblock:true, pose:"kick", big:true, sta:20 } },
+  { id:"cobra", name:"«Cobra» Silva", short:"COBRA", style:"Jiu-jitsu", cls:"Wélter", kg:77, build:0,
+    desc:"Peligrosa en el suelo. Con el rival tumbado, su especial es un mataleón.",
+    skin:"#a96a40", hair:"#1a1a1a", shorts:"#7a3fc6", trim:"#f2c14e", gloves:"#3a3a3a", alt:"#1f8a8a",
+    stats:{ punch:0.85, kick:0.9, td:1.1, sub:1.7, speed:1.05, chin:1.0, cardio:1.05 },
+    sp:{ name:"MATALEÓN", kind:"sub", st:6, ac:8, rc:20, range:30, dmg:30, lunge:1.6, pose:"td", big:true, sta:18 } },
+  { id:"toro", name:"«El Toro» Ramos", short:"TORO", style:"Boxeo", cls:"Medio", kg:84, build:1,
+    desc:"Manos de piedra y mentón de hierro, pero se cansa pronto.",
+    skin:"#c98b5e", hair:"#2b1b12", shorts:"#cf2e2e", trim:"#ffd34d", gloves:"#b81f1f", alt:"#f2f2f2",
+    stats:{ punch:1.3, kick:0.8, td:0.8, sub:0.7, speed:0.98, chin:0.85, cardio:0.8 },
+    sp:{ name:"MANO DE PIEDRA", kind:"strike", st:13, ac:4, rc:18, range:25, dmg:32, hs:30, kb:4, knock:true, unblock:true, pose:"punch", big:true, sta:24 } },
+  { id:"lobo", name:"«Lobo» Volkov", short:"LOBO", style:"Sambo y kickboxing", cls:"Semipesado", kg:93, build:1, beard:true,
+    desc:"Ruso y muy completo: patea fuerte, derriba y remata en el suelo.",
+    skin:"#f0cdb0", hair:"#6b4a2b", shorts:"#1f4fa8", trim:"#d62828", gloves:"#d62828", alt:"#2f8f43",
+    stats:{ punch:1.1, kick:1.2, td:1.1, sub:1.05, speed:0.95, chin:0.92, cardio:1.0 },
+    sp:{ name:"PATADA ALTA", kind:"strike", st:12, ac:5, rc:16, range:34, dmg:30, hs:30, kb:4.5, knock:true, unblock:true, pose:"spin", big:true, sta:24 } },
+  { id:"oso", name:"«Oso» Petrov", short:"OSO", style:"Lucha libre", cls:"Pesado", kg:118, build:2,
+    desc:"Ruso de 118 kilos. Lento y se ahoga, pero si te agarra te aplasta.",
+    skin:"#f1c9a8", hair:"#d4ac5c", shorts:"#2f8f43", trim:"#111111", gloves:"#2a2a2a", alt:"#7b1e1e",
+    stats:{ punch:1.2, kick:0.75, td:1.35, sub:1.0, speed:0.85, chin:0.78, cardio:0.7 },
+    sp:{ name:"SUPLEX", kind:"td", st:7, ac:8, rc:26, range:25, dmg:18, down:120, lunge:2.8, pose:"td", big:true, sta:24 } },
+];
+const MOVES = {
+  punch:{ kind:"strike", st:5, ac:4, rc:8, range:22, dmg:5, sta:9, hs:12, kb:1.3, stat:"punch", pose:"punch" },
+  mount:{ kind:"mount", st:6, ac:6, rc:12, range:34, sta:10, pose:"td" },
+  gnp:  { kind:"strike", st:6, ac:4, rc:9, range:30, dmg:5, sta:7, hs:12, kb:0, stat:"punch", pose:"gnp", ground:true },
+  kick: { kind:"strike", st:9, ac:4, rc:14, range:30, dmg:8, sta:15, hs:16, kb:2.2, stat:"kick", pose:"kick" },
+  knee: { kind:"strike", st:3, ac:7, rc:6, range:20, dmg:10, sta:10, hs:18, kb:2.6, stat:"kick", pose:"knee" },
+  td:   { kind:"td", st:10, ac:7, rc:22, range:20, dmg:4, sta:22, down:70, lunge:2.3, stat:"td", pose:"td" },
+};
+const DIFF = {
+  easy:  { react:26, block:0.15, mash:0.10, label:"Fácil" },
+  normal:{ react:15, block:0.38, mash:0.17, label:"Normal" },
+  hard:  { react:8,  block:0.62, mash:0.24, label:"Difícil" },
+};
+
+/* ---------- Sonido ---------- */
+let AC = null, muted = false;
+function audio(){
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { AC = null; } }
+  if (AC && AC.state === "suspended") AC.resume().catch(()=>{});
+}
+function tone(f, d, v, type="square", to=null, delay=0){
+  if (!AC || muted) return;
+  const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + d);
+  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+  o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + 0.02);
+}
+function noise(d, v, freq, delay=0){
+  if (!AC || muted) return;
+  const t = AC.currentTime + delay, len = Math.max(1, Math.floor(AC.sampleRate * d));
+  const buf = AC.createBuffer(1, len, AC.sampleRate), ch = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+  const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  s.buffer = buf; f.type = "bandpass"; f.frequency.value = freq; f.Q.value = 0.9;
+  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+  s.connect(f).connect(g).connect(AC.destination); s.start(t);
+}
+const sfx = {
+  hit:   () => { noise(0.08, 0.5, 900); tone(120, 0.1, 0.25, "square", 60); },
+  big:   () => { noise(0.22, 0.8, 450); tone(90, 0.3, 0.45, "square", 35); },
+  block: () => { noise(0.05, 0.3, 2600); },
+  whoosh:() => { noise(0.09, 0.12, 1900); },
+  thud:  () => { tone(70, 0.25, 0.55, "sine", 30); noise(0.15, 0.4, 300); },
+  bell:  () => { [0, 0.35].forEach(dl => [880, 1320, 2210].forEach((f, i) => tone(f, 1.1, 0.16 / (i + 1), "sine", null, dl))); },
+  crowd: () => { noise(1.6, 0.25, 650); noise(1.2, 0.15, 1400, 0.1); },
+  choke: () => { tone(220, 0.08, 0.12, "triangle", 180); },
+};
+
+/* ---------- Dibujo de luchadores ---------- */
+function shade(hex, k=0.72){
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * k), g = Math.round(((n >> 8) & 255) * k), b = Math.round((n & 255) * k);
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+function drawFighter(c, d, X, Y, face, pose, k, opt={}){
+  const fl = opt.flash, shorts = opt.alt ? d.alt : d.shorts;
+  const S = fl ? "#fff" : d.skin, Sd = fl ? "#fff" : shade(d.skin), Hc = fl ? "#fff" : d.hair;
+  const Sh = fl ? "#fff" : shorts, Tr = fl ? "#fff" : d.trim, G = fl ? "#fff" : d.gloves, Gd = fl ? "#ddd" : shade(d.gloves, 0.6);
+  c.save(); c.translate(Math.round(X), Math.round(Y)); c.scale(face, 1);
+  const p = (col, x, y, w, h) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  // Cabeza grande (13x13), cuerpo corto y piernas cortas
+  const bw = d.build || 0, eh = bw;   // -1 mosca, 0 ligero, 1 medio, 2 pesado
+  const head = (dx, y0, ko) => {
+    y0 -= eh;
+    p(S, -6 + dx, y0, 13, 13); p(Sd, -6 + dx, y0 + 12, 13, 1);
+    p(Hc, -6 + dx, y0 - 1, 13, 4); p(Hc, -7 + dx, y0, 3, 8); p(Hc, 4 + dx, y0 + 2, 3, 1);
+    p(Sd, -2 + dx, y0 + 5, 2, 3);
+    if (ko) { p("#111", 2 + dx, y0 + 6, 3, 1); }
+    else { p("#fff", 2 + dx, y0 + 5, 3, 3); p("#111", 4 + dx, y0 + 5, 2, 3); }
+    if (d.beard) { p(Hc, -2 + dx, y0 + 9, 9, 4); p(Hc, 0 + dx, y0 + 8, 6, 1); }
+    else p(Sd, 3 + dx, y0 + 10, 3, 1);
+  };
+  const legs = (walk) => {
+    const a = walk ? Math.round(Math.sin(k * 0.35) * 2) : 0, lw = bw >= 2 ? 5 : 4;
+    p(Sd, -5 - a - (lw - 4), -8, lw, 8); p(Sd, -6 - a - (lw - 4), -2, 5, 2);
+    p(S, 1 + a, -8, lw, 8); p(S, 1 + a, -2, 6, 2);
+  };
+  const shortsT = (lean=0, y=-13) => { p(Sh, -6 - bw + lean, y, 12 + 2 * bw, 6); p(Tr, -6 - bw + lean, y, 12 + 2 * bw, 1); p(Tr, 4 + bw + lean, y + 1, 2, 5); };
+  const torso = (b, lean=0) => {
+    shortsT(lean);
+    p(S, -5 - bw + lean, -21 - eh + b, 10 + 2 * bw, 9 + eh); p(Sd, -5 - bw + lean, -21 - eh + b, 2, 9 + eh); p(Sd, -1 + lean, -16 + b, 4, 1);
+    if (bw >= 2) p(Sd, -2 + lean, -14 + b, 7, 1);
+  };
+  const guardBack = (b, lean=0) => { p(Sd, -2 + lean, -20 - eh + b, 3, 4); p(Gd, 1 + bw + lean, -23 - eh + b, 5, 5); };
+  const guardFront = (b, lean=0) => { p(S, 3 + bw + lean, -19 - eh + b, 3, 3); p(G, 5 + bw + lean, -22 - eh + b, 5, 5); p(shade(G, 1.25), 6 + bw + lean, -22 - eh + b, 3, 1); };
+  const bob = Math.round(Math.sin(k * 0.12));
+  switch (pose) {
+    case "idle": case "walk":
+      guardBack(bob); legs(pose === "walk"); torso(bob); head(0, -34 + bob); guardFront(bob); break;
+    case "block":
+      legs(false); torso(0); head(-1, -34);
+      p(S, 3, -23, 3, 4); p(Gd, 2, -30, 5, 7); p(G, 5, -29, 6, 8); break;
+    case "punch0": guardBack(0); legs(false); torso(0, -1); head(-1, -34); p(S, 1, -19, 3, 3); p(G, 2, -23, 5, 5); break;
+    case "punch1":
+      guardBack(0, 1); legs(false); torso(0, 1); head(2, -34);
+      p(S, 4, -19, 10, 3); p(G, 13, -21, 6, 6); p(shade(G, 1.25), 14, -21, 4, 1); break;
+    case "punch2": guardBack(0); legs(false); torso(0); head(0, -34); p(S, 3, -19, 6, 3); p(G, 8, -21, 5, 5); break;
+    case "gnp0": case "gnp2":
+      guardBack(0, 1); legs(false); torso(0, 1); head(2, -34); p(S, 3, -22, 3, 4); p(G, 4, -28, 5, 5); break;
+    case "gnp1":
+      guardBack(1, 2); legs(false); torso(1, 2); head(4, -32);
+      p(S, 6, -18, 3, 4); p(S, 8, -15, 3, 5); p(G, 9, -11, 6, 6); break;
+    case "kick0":
+      p(Sd, -5, -8, 4, 8); p(Sd, -6, -2, 5, 2); p(S, 1, -13, 6, 4); p(S, 5, -11, 4, 7);
+      guardBack(0, -1); torso(0, -1); head(-2, -34); guardFront(0, -1); break;
+    case "kick1":
+      p(Sd, -5, -8, 4, 8); p(Sd, -6, -2, 5, 2); p(S, 1, -12, 15, 4); p(S, 15, -14, 3, 5);
+      guardBack(0, -2); torso(0, -2); head(-4, -34); guardFront(0, -2); break;
+    case "kick2":
+      p(Sd, -5, -8, 4, 8); p(Sd, -6, -2, 5, 2); p(S, 1, -10, 5, 4); p(S, 4, -8, 4, 8);
+      guardBack(0, -1); torso(0, -1); head(-2, -34); guardFront(0, -1); break;
+    case "spin1":
+      p(Sd, -5, -8, 4, 8); p(Sd, -6, -2, 5, 2); p(S, 1, -20, 17, 4); p(S, 17, -22, 3, 5);
+      shortsT(-3); p(S, -8, -22, 10, 9); head(-7, -35); p(G, -11, -21, 5, 5); p(Gd, -1, -24, 5, 5); break;
+    case "hit":
+      p(Sd, -5, -8, 4, 8); p(Sd, -6, -2, 5, 2); p(S, 1, -8, 4, 8); p(S, 1, -2, 6, 2);
+      torso(0, -2); head(-4, -33); p(Gd, -6, -27, 5, 5); p(G, 4, -18, 5, 5); break;
+    case "td0": case "td1": case "td2": {
+      const ex = pose === "td1" ? 3 : 0;
+      p(Sd, -7, -6, 4, 6); p(Sd, -8, -2, 5, 2); p(S, 2, -6, 4, 6); p(S, 2, -2, 6, 2);
+      p(Sh, -6, -11, 12, 5); p(Tr, -6, -11, 12, 1);
+      p(S, -1, -18, 12 + ex, 7); p(Sd, -1, -12, 12 + ex, 1);
+      head(15 + ex, -25);
+      p(S, 12 + ex, -12, 8, 3); p(G, 19 + ex, -14, 5, 5); break;
+    }
+    case "down": case "ko":
+      p(Sd, 3, -7, 10, 3); p(S, 3, -4, 11, 4); p(S, 13, -6, 2, 6);
+      p(Sh, -5, -6, 9, 6); p(Tr, -5, -6, 1, 6);
+      p(S, -13, -6, 9, 6); p(Sd, -13, -6, 9, 1);
+      p(S, -26, -12, 13, 12); p(Hc, -27, -12, 3, 12); p(Sd, -26, -1, 13, 1);
+      p("#111", -20, -9, 3, 1); p(Sd, -17, -5, 2, 2);
+      p(G, -11, -10, 5, 4); p(Gd, -8, -3, 5, 3); break;
+    case "getup":
+      p(Sd, -7, -6, 4, 6); p(Sd, -8, -2, 5, 2); p(S, 2, -6, 4, 6); p(S, 2, -2, 6, 2);
+      shortsT(0, -11); p(S, -5, -18, 10, 8); p(Sd, -5, -18, 2, 8); head(0, -31);
+      p(G, 5, -19, 5, 5); break;
+    case "choking":
+      p(S, 0, -4, 13, 4); p(Sd, 1, -7, 11, 3);
+      p(Sh, -7, -9, 9, 8); p(S, -7, -17, 9, 8); p(Sd, -7, -17, 2, 8);
+      head(-3, -30);
+      p(S, 1, -15, 9, 3); p(S, 1, -11, 9, 3); p(G, 9, -16, 5, 5); p(Gd, 9, -11, 5, 4); break;
+    case "mount": case "mountP":
+      p(Sd, -6, -7, 5, 6); p(S, 0, -9, 7, 4); p(S, 5, -6, 4, 6);
+      shortsT(0, -13); p(S, -5, -21, 10, 9); p(Sd, -5, -21, 2, 9);
+      if (pose === "mount") { guardBack(0); head(0, -34); guardFront(0); }
+      else { guardBack(1, 1); head(3, -33); p(S, 4, -19, 3, 4); p(S, 6, -15, 3, 5); p(G, 7, -11, 6, 6); }
+      break;
+    case "win":
+      legs(false); torso(0); head(0, -34);
+      p(S, -8, -36, 3, 15); p(G, -9, -41, 6, 6); p(S, 5, -36, 3, 15); p(G, 4, -41, 6, 6); break;
+  }
+  c.restore();
+}
+function poseOf(f){
+  if (f.state === "atk") {
+    const m = f.move, ph = f.t < f.mt.st ? 0 : f.t < f.mt.st + f.mt.ac ? 1 : 2;
+    if (m.pose === "spin") return ph === 1 ? "spin1" : "kick0";
+    return m.pose + ph;
+  }
+  if (f.state === "bstun") return "block";
+  if (f.state === "choked" || f.state === "mounted") return "down";
+  if (f.state === "mount") return f.mp < 7 ? "mountP" : "mount";
+  return f.state;
+}
+
+/* ---------- Fondo (jaula y público) ---------- */
+const bg = document.createElement("canvas"); bg.width = W; bg.height = H;
+const crowdDots = [];
+const OCT = Array.from({ length: 8 }, (_, i) => {
+  const a = Math.PI / 8 + i * Math.PI / 4;
+  return [CX + Math.cos(a) * 152, CY + Math.sin(a) * 54];
+});
+function octPath(c, k=1, dy=0){
+  c.beginPath();
+  OCT.forEach(([x, y], i) => { const px = CX + (x - CX) * k, py = CY + (y - CY) * k + dy; i ? c.lineTo(px, py) : c.moveTo(px, py); });
+  c.closePath();
+}
+function buildBg(){
+  const c = bg.getContext("2d"), p = (col, x, y, w, h) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+  const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, "#07080d"); gr.addColorStop(1, "#131626");
+  c.fillStyle = gr; c.fillRect(0, 0, W, H);
+  for (let i = 0; i < 5; i++) {
+    const x = 32 + i * 64; c.fillStyle = "rgba(255,236,170,.045)";
+    c.beginPath(); c.moveTo(x - 4, 0); c.lineTo(x + 4, 0); c.lineTo(x + 30, 110); c.lineTo(x - 30, 110); c.fill();
+    p("#fff3c4", x - 3, 0, 6, 2);
+  }
+  const tones = ["#1d2132", "#252a3e", "#2c2233", "#1f2a2a", "#30283a"];
+  for (let row = 0; row < 5; row++) {
+    const y = 30 + row * 8;
+    for (let x = (row % 2) * 4; x < W; x += 8) {
+      const col = tones[(x * 7 + row * 13) % tones.length];
+      p(col, x + 1, y + 3, 6, 5); p(shade(col, 1.35), x + 2, y, 4, 4);
+      crowdDots.push([x + 3, y + 1]);
+    }
+  }
+  // Valla del fondo: sale de las aristas traseras del octógono
+  const FH = 30;
+  for (let i = 0; i < 8; i++) {
+    const [x1, y1] = OCT[i], [x2, y2] = OCT[(i + 1) % 8];
+    if (Math.min(y1, y2) >= CY) continue;
+    c.save();
+    c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.lineTo(x2, y2 - FH); c.lineTo(x1, y1 - FH); c.closePath();
+    c.fillStyle = "rgba(10,12,20,.55)"; c.fill();
+    c.clip();
+    c.globalAlpha = 0.3; c.strokeStyle = "#9aa3b8"; c.lineWidth = 1;
+    for (let x = -100; x < W + 100; x += 5) {
+      c.beginPath(); c.moveTo(x, 20); c.lineTo(x + 90, 110); c.stroke();
+      c.beginPath(); c.moveTo(x + 90, 20); c.lineTo(x, 110); c.stroke();
+    }
+    c.restore();
+    c.strokeStyle = "#0a0b10"; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(x1, y1 - FH); c.lineTo(x2, y2 - FH); c.stroke();
+  }
+  for (const [x, y] of OCT) if (y < CY) { p("#0a0b10", Math.round(x) - 2, Math.round(y) - FH - 2, 5, FH + 2); p("#2a2f45", Math.round(x) - 1, Math.round(y) - FH - 2, 1, FH + 2); }
+  // Lona
+  octPath(c, 1, 3); c.fillStyle = "#0a0b10"; c.fill();
+  octPath(c); const mg = c.createLinearGradient(0, CY - 54, 0, CY + 54);
+  mg.addColorStop(0, "#b9bfcc"); mg.addColorStop(1, "#e7e9ef"); c.fillStyle = mg; c.fill();
+  c.strokeStyle = "#111"; c.lineWidth = 2; octPath(c); c.stroke();
+  c.strokeStyle = "rgba(194,43,43,.7)"; c.lineWidth = 1; octPath(c, 0.97); c.stroke();
+  c.fillStyle = "rgba(20,24,40,.10)"; octPath(c, 0.5); c.fill();
+  c.strokeStyle = "rgba(20,24,40,.18)"; octPath(c, 0.5); c.stroke();
+  c.font = "8px Silkscreen, monospace"; c.textAlign = "center"; c.textBaseline = "middle";
+  c.fillStyle = "rgba(180,30,30,.55)"; c.fillText("OCTÁGONO PIXEL", CX, CY + 1);
+  c.fillStyle = "rgba(20,24,40,.2)"; c.fillText("ESTRELLA", CX - 82, CY + 30); c.fillText("JAULA FC", CX + 82, CY + 30);
+  c.fillText("VILLALBA", CX - 82, CY - 28); c.fillText("PUÑO DE ORO", CX + 82, CY - 28);
+}
+function inOct(f){
+  let u = (f.x - CX) / RX, v = (f.y - CY) / RZ;
+  u = clamp(u, -1, 1); v = clamp(v, -1, 1);
+  const s = Math.abs(u) + Math.abs(v);
+  if (s > 1.42) { u *= 1.42 / s; v *= 1.42 / s; }
+  f.x = CX + u * RX; f.y = CY + v * RZ;
+}
+function drawFrontCage(){
+  ctx.save(); ctx.globalAlpha = 0.25; ctx.strokeStyle = "#0a0b10"; ctx.lineWidth = 2;
+  for (let i = 0; i < 8; i++) {
+    const [x1, y1] = OCT[i], [x2, y2] = OCT[(i + 1) % 8];
+    if (Math.max(y1, y2) <= CY) continue;
+    ctx.beginPath(); ctx.moveTo(x1, y1 - 24); ctx.lineTo(x2, y2 - 24); ctx.stroke();
+  }
+  ctx.restore();
+  for (const [x, y] of OCT) if (y > CY) {
+    ctx.fillStyle = "#0a0b10"; ctx.fillRect(Math.round(x) - 2, Math.round(y) - 24, 5, 26);
+    ctx.fillStyle = "#c22b2b"; ctx.fillRect(Math.round(x) - 2, Math.round(y) - 24, 5, 2);
+  }
+}
+
+/* ---------- Entrada ---------- */
+const keys = new Set(), pressed = new Set();
+const MAP = {
+  solo:{ l:["ArrowLeft"], r:["ArrowRight"], u:["ArrowUp"], d:["ArrowDown"], b:["Space"], p:["KeyA"], k:["KeyS"], t:["KeyD"], s:["KeyF"] },
+  p1:  { l:["KeyA"], r:["KeyD"], u:["KeyW"], d:["KeyS"], b:["ShiftLeft"], p:["KeyF"], k:["KeyG"], t:["KeyH"], s:["KeyT"] },
+  p2:  { l:["ArrowLeft"], r:["ArrowRight"], u:["ArrowUp"], d:["ArrowDown"], b:["ShiftRight","Numpad0"], p:["Comma","Numpad1"], k:["Period","Numpad2"], t:["Slash","Minus","Numpad3"], s:["KeyM","NumpadEnter"] },
+};
+const GAMEKEYS = new Set(Object.values(MAP).flatMap(m => Object.values(m).flat()));
+const touchHeld = new Set(), touchHit = new Set();
+addEventListener("keydown", e => {
+  if (e.code === "Escape") { togglePause(); return; }
+  if (!game || game.demo || paused) return;
+  if (GAMEKEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) pressed.add(e.code); keys.add(e.code); }
+});
+addEventListener("keyup", e => keys.delete(e.code));
+addEventListener("blur", () => { keys.clear(); if (game && !game.demo && game.phase !== "end") pauseOn(); });
+document.querySelectorAll(".tb").forEach(b => {
+  const a = b.dataset.act;
+  const on = e => { e.preventDefault(); audio(); touchHeld.add(a); touchHit.add(a); b.classList.add("on"); };
+  const off = e => { e.preventDefault(); touchHeld.delete(a); b.classList.remove("on"); };
+  b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off);
+  b.addEventListener("pointercancel", off); b.addEventListener("pointerleave", off);
+});
+function humanInput(map, touch){
+  const has = (a, n) => a.some(c => keys.has(c)) || (touch && touchHeld.has(n));
+  const hit = (a, n) => a.some(c => pressed.has(c)) || (touch && touchHit.has(n));
+  return { mx: (has(map.r, "r") ? 1 : 0) - (has(map.l, "l") ? 1 : 0), mz: (has(map.d, "d") ? 1 : 0) - (has(map.u, "u") ? 1 : 0),
+           block: has(map.b, "b"), p: hit(map.p, "p"), k: hit(map.k, "k"), t: hit(map.t, "t"), s: hit(map.s, "s") };
+}
+
+/* ---------- Partida ---------- */
+let game = null, paused = false, mode = "1p", diff = "normal", picks = [null, null], picking = 0, lastSetup = null;
+
+function makeFighter(def, side, ctrl, alt){
+  return { def, side, ctrl, alt, x: side ? 205 : 115, y: CY, vx: 0, vy: 0, vz: 0, face: side ? -1 : 1, air: false,
+    hp: 100, shown: 100, sta: 100, sp: 0, state: "idle", t: 0, k: 0, move: null, mt: null, hitDone: false,
+    buf: null, flash: 0, inv: 0, esc: 0,
+    ai: { next: 0, mx: 0, block: false, blockT: 0 },
+    cd: 0, mp: 99, recent: [],
+    st: { thrown: 0, landed: 0, td: 0, kd: 0, mount: 0 } };
+}
+function newGame(d0, d1, ctrl1, demo){
+  const f0 = makeFighter(d0, 0, demo ? "cpu" : "p1", false);
+  const f1 = makeFighter(d1, 1, ctrl1, d0 === d1);
+  game = { demo, phase: "intro", t: 0, round: 1, timer: ROUNDT, f: [f0, f1], parts: [], texts: [], banner: null,
+    shake: 0, hitstop: 0, rd: [[0,0],[0,0],[0,0]], rkd: [[0,0],[0,0],[0,0]], sub: null, gnd: null, fc: 0, result: null,
+    diff: demo ? "normal" : diff };
+  if (!demo) sfx.bell();
+}
+function startDemo(){
+  const a = ROSTER[Math.floor(Math.random() * ROSTER.length)];
+  let b = ROSTER[Math.floor(Math.random() * ROSTER.length)]; if (b === a) b = ROSTER[(ROSTER.indexOf(a) + 1) % ROSTER.length];
+  newGame(a, b, "cpu", true);
+}
+const clockText = timer => { const s = Math.ceil(timer / 60 * 5); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const sc = (f, v) => Math.max(1, Math.round(v / (f.def.stats.speed * (0.7 + 0.3 * f.sta / 100))));
+
+function say(txt, x, y, col="#fff"){ game.texts.push({ txt, x, y, col, life: 50 }); }
+function sparks(x, y, n, cols){ for (let i = 0; i < n; i++) game.parts.push({ x, y, vx: rnd(-2, 2), vy: rnd(-2.4, 0.4), life: rnd(12, 24), col: cols[i % cols.length], s: Math.random() < 0.3 ? 2 : 1 }); }
+function banner(txt, dur, col="#f2c14e", sub=""){ game.banner = { txt, sub, t: 0, dur, col }; }
+
+function startMove(f, a, o){
+  let m;
+  const oDown = o.state === "down" || o.state === "ko";
+  const near = Math.abs(o.x - f.x) < 34 && Math.abs(o.y - f.y) < 9;
+  if (a === "p") m = oDown && near ? MOVES.gnp : MOVES.punch;
+  else if (a === "k") m = MOVES.kick;
+  else if (a === "t") m = o.state === "down" && near ? MOVES.mount : MOVES.td;
+  else if (a === "s") { if (f.sp < 100) return; m = f.def.sp; f.sp = 0; say(m.name, f.x, f.y - 48, "#ff7be0"); }
+  if (!m) return;
+  const cost = (m.sta || 0) / f.def.stats.cardio;
+  if (f.sta < cost) { if (f.ctrl !== "cpu" && game.fc - (f.tiredMsg || -99) > 60) { f.tiredMsg = game.fc; say("AGOTADO", f.x, f.y - 46, "#4fc3f7"); } return; }
+  f.sta = Math.max(0, f.sta - cost);
+  f.state = "atk"; f.move = m; f.t = 0; f.hitDone = false;
+  f.mt = { st: sc(f, m.st), ac: sc(f, m.ac) }; f.mt.tot = f.mt.st + f.mt.ac + sc(f, m.rc);
+  if (m.kind === "strike") f.st.thrown++;
+}
+
+function damage(a, d, m){
+  const mult = m.stat ? a.def.stats[m.stat] : 1;
+  const weight = clamp(Math.sqrt(a.def.kg / d.def.kg), 0.75, 1.35);
+  return (m.big ? 1 : 0.5) * m.dmg * mult * weight * (0.5 + 0.5 * a.sta / 100) * d.def.stats.chin;
+}
+function addDmg(a, d, dmg){
+  d.hp = Math.max(0, d.hp - dmg);
+  a.sp = Math.min(100, a.sp + dmg * 1.6); d.sp = Math.min(100, d.sp + dmg * 0.9);
+  game.rd[game.round - 1][a.side] += dmg;
+}
+function knockdown(a, d, frames){
+  d.state = "down"; d.t = frames; d.move = null;
+  a.st.kd++; game.rkd[game.round - 1][a.side]++;
+}
+
+function tryHit(a, d, m){
+  const dist = (d.x - a.x) * a.face;
+  if (dist < -4 || dist > m.range) return;
+  if (d.state === "ko" || d.inv > 0 || d.state === "choked" || d.state === "mounted") return;
+  const dDown = d.state === "down";
+  if (Math.abs(a.y - d.y) > 8) return;
+  a.hitDone = true;
+  const hx = d.x - d.face * 2, hy = dDown ? d.y - 6 : d.y - 22;
+
+  if (m.kind === "mount") {
+    if (!dDown) return;
+    if (Math.random() < 0.7 * a.def.stats.td / d.def.stats.td * clamp(Math.sqrt(a.def.kg / d.def.kg), 0.7, 1.3)) startMount(a, d);
+    else { d.t = Math.min(d.t, 8); say("¡SE DEFIENDE!", d.x, d.y - 44, "#7fe3ff"); sfx.block(); }
+    return;
+  }
+  if (m.kind === "sub") {
+    if (dDown) { startSub(a, d, "MATALEÓN", 60); return; }
+    knockdown(a, d, 75); d.vx = a.face * 1.2; addDmg(a, d, 6); a.st.td++;
+    say("¡AL SUELO!", d.x, d.y - 44, "#f2c14e"); sfx.thud(); game.shake = 4; game.hitstop = 5; return;
+  }
+  if (m.kind === "td") {
+    if (dDown) return;
+    const dmg = damage(a, d, m);
+    knockdown(a, d, Math.round(m.down * (m.stat ? a.def.stats.td : 1)));
+    a.st.kd--; game.rkd[game.round - 1][a.side]--; a.st.td++;
+    d.vx = a.face * 1.6; addDmg(a, d, dmg);
+    say(m.big ? m.name + "!" : "¡DERRIBO!", d.x, d.y - 44, "#f2c14e");
+    sparks(d.x, d.y - 2, 10, ["#cfd3dc", "#ffffff"]); sfx.thud(); game.shake = m.big ? 7 : 4; game.hitstop = m.big ? 9 : 5;
+    if (d.hp <= 0) endFight(a, "TKO", "golpes en el suelo");
+    return;
+  }
+  if (dDown && !m.ground && m.pose !== "punch") return;
+  let dmg = damage(a, d, m);
+  if (dDown) {
+    dmg *= 1.25; d.t = Math.min(d.t + 8, 95); d.flash = 3; a.st.landed++;
+    sparks(hx, hy, 6, ["#fff6c2", "#ffd34d", "#b3262a"]); sfx.hit(); game.shake = 2; game.hitstop = 3;
+    addDmg(a, d, dmg); if (d.hp <= 0) endFight(a, "TKO", "golpes en el suelo");
+    return;
+  }
+  const blocked = d.state === "block" && d.face === -a.face && !m.unblock;
+  if (blocked) {
+    dmg *= 0.15; d.state = "bstun"; d.t = 8; d.vx = a.face * 1.3; d.sta = Math.max(0, d.sta - 4);
+    sparks(hx, hy, 4, ["#9fb3ff", "#ffffff"]); sfx.block(); game.hitstop = 2;
+    addDmg(a, d, dmg); if (d.hp <= 0) endFight(a, "KO");
+    return;
+  }
+  const counter = d.state === "atk" && d.t < d.mt.st;
+  if (counter) { dmg *= 2; say("¡CONTRA!", d.x, d.y - 44, "#7fe3ff"); }
+  a.st.landed++; d.flash = 4; d.sta = Math.max(0, d.sta - dmg * 0.8);
+  const koBase = m.big ? 0.08 : m.stat === "kick" ? 0.006 : 0.003;
+  const koChance = koBase * (m.stat ? a.def.stats[m.stat] : 1) * clamp(1.25 - d.hp / 100, 0.2, 1.1) * (counter ? 2.5 : 1) * d.def.stats.chin;
+  if (Math.random() < koChance) {
+    addDmg(a, d, d.hp); d.vx = a.face * 2.5;
+    sparks(hx, hy, 26, ["#fff6c2", "#ffd34d", "#ff8a3d", "#ffffff"]); sfx.big(); game.shake = 10; game.hitstop = 28;
+    endFight(a, "KO", "directo");
+    return;
+  }
+  d.recent = d.recent.filter(t => t > game.fc - 120); d.recent.push(game.fc);
+  const flashKd = !m.knock && m.stat === "kick" && d.hp - dmg < 30 && Math.random() < 0.18;
+  if (m.knock || flashKd) {
+    knockdown(a, d, 80); d.vx = a.face * m.kb;
+    say(flashKd ? "¡A LA LONA!" : m.name + "!", d.x, d.y - 44, "#ff7be0");
+    sparks(hx, hy, 18, ["#fff6c2", "#ffd34d", "#ff8a3d", "#b3262a"]); sfx.big(); game.shake = 8; game.hitstop = 10;
+  } else {
+    d.state = "hit"; d.t = m.hs; d.vx = a.face * m.kb; d.move = null;
+    sparks(hx, hy, m.stat === "kick" ? 10 : 7, ["#fff6c2", "#ffd34d", "#b3262a"]);
+    sfx.hit(); game.shake = m.stat === "kick" ? 4 : 2; game.hitstop = counter ? 7 : 4;
+  }
+  addDmg(a, d, dmg);
+  if (d.hp <= 0) endFight(a, "KO");
+  else if (d.hp < 18 && d.recent.length >= 3 && d.state === "hit") endFight(a, "TKO", "el árbitro para el combate");
+}
+
+function anyAct(i){ return i.p || i.k || i.t || i.s; }
+function freeBoth(a, d, msg){
+  game.gnd = null; game.sub = null;
+  d.state = "getup"; d.t = 14; d.inv = 30;
+  a.state = "getup"; a.t = 16;
+  if (msg) say(msg, d.x, d.y - 44, "#7fe3ff");
+}
+function startMount(a, d){
+  game.gnd = { a, d, t: 0, esc: 0, need: Math.round(16 * a.def.stats.td), un: 0 };
+  a.state = "mount"; d.state = "mounted"; a.move = null; a.vx = d.vx = 0; a.cd = 10; a.mp = 99;
+  a.face = -d.face; a.x = d.x - 7 * d.face; a.y = d.y + 0.2; inOct(a);
+  a.st.mount++;
+  say("¡MONTADA!", d.x, d.y - 44, "#f2c14e"); sfx.thud(); game.shake = 3;
+}
+function updateMount(){
+  const g = game.gnd, { a, d } = g;
+  g.t++; if (a.cd > 0) a.cd--; a.mp++;
+  const ia = readInput(a), id = readInput(d);
+  if (anyAct(id)) g.esc++;
+  if (ia.p && a.cd <= 0 && a.sta >= 6) {
+    a.cd = sc(a, 13); a.mp = 0; a.st.thrown++; a.st.landed++; a.sta -= 6 / a.def.stats.cardio;
+    const dmg = 2.4 * a.def.stats.punch * clamp(Math.sqrt(a.def.kg / d.def.kg), 0.75, 1.35) * (0.6 + 0.4 * a.sta / 100) * d.def.stats.chin;
+    addDmg(a, d, dmg); g.un++; d.flash = 3;
+    sparks(d.x - 19 * d.face, d.y - 8, 6, ["#fff6c2", "#ffd34d", "#b3262a"]); sfx.hit(); game.shake = 2; game.hitstop = 3;
+    if (d.hp <= 0) { endFight(a, "TKO", "golpes desde la montada"); return; }
+    if (g.un >= 7 && d.hp < 35) { endFight(a, "TKO", "el árbitro para el combate"); return; }
+  } else if (ia.k) {
+    startSub(a, d, "LLAVE DE BRAZO", 30); return;
+  } else if (ia.s && a.sp >= 100) {
+    a.sp = 0;
+    if (a.def.id === "cobra") { startSub(a, d, "MATALEÓN", 62); return; }
+    a.mp = 0; a.cd = sc(a, 20); g.un += 2; d.flash = 5;
+    addDmg(a, d, 14 * d.def.stats.chin);
+    say("¡CODAZO!", d.x, d.y - 44, "#ff7be0");
+    sparks(d.x - 19 * d.face, d.y - 8, 16, ["#fff6c2", "#ffd34d", "#ff8a3d", "#b3262a"]); sfx.big(); game.shake = 7; game.hitstop = 9;
+    if (d.hp <= 0) { endFight(a, "TKO", "golpes desde la montada"); return; }
+  }
+  if (g.esc >= g.need) { a.sta = Math.max(0, a.sta - 15); freeBoth(a, d, "¡ESCAPA!"); return; }
+  if (g.t > 420) freeBoth(a, d, "¡ARRIBA!");
+}
+function startSub(a, d, name, start){
+  game.gnd = null;
+  a.state = "choking"; d.state = "choked"; a.move = null; a.vx = d.vx = 0;
+  a.face = d.face; a.x = d.x - 33 * d.face; a.y = d.y + 0.2; inOct(a);
+  game.sub ={ a, d, t: 0, v: start, name };
+  say("¡" + name + "!", d.x, d.y - 44, "#ff7be0"); sfx.thud(); game.shake = 3;
+}
+function updateSub(){
+  const s = game.sub, { a, d } = s;
+  s.t++;
+  const ia = readInput(a), id = readInput(d);
+  s.v += 0.04 * a.def.stats.sub;
+  if (anyAct(ia) && a.sta > 2) { s.v += 4.2 * (0.55 + 0.45 * a.def.stats.sub) * (0.5 + 0.5 * a.sta / 100); a.sta -= 0.8 / a.def.stats.cardio; }
+  if (anyAct(id)) { s.v -= 4.2 * (0.75 + 0.5 * d.hp / 100) * (0.6 + 0.4 * d.sta / 100); d.sta = Math.max(0, d.sta - 0.4); }
+  if (s.t % 10 === 0) sfx.choke();
+  d.hp = Math.max(1, d.hp - 0.05); game.rd[game.round - 1][a.side] += 0.05;
+  if (s.v >= 100) { endFight(a, "SUMISIÓN", s.name); return; }
+  if (s.v <= 0 || s.t > 360) { a.sta = Math.max(0, a.sta - 20); freeBoth(a, d, "¡ESCAPA!"); }
+}
+
+function readInput(f){
+  if (f.ctrl === "p1") return humanInput(mode === "1p" ? MAP.solo : MAP.p1, true);
+  if (f.ctrl === "p2") return humanInput(MAP.p2, false);
+  return cpuInput(f, game.f[1 - f.side]);
+}
+function cpuInput(f, o){
+  const D = DIFF[game.diff], ai = f.ai;
+  const inp = { mx: 0, mz: 0, block: false, p: false, k: false, t: false, s: false };
+  if (f.state === "down") { if (Math.random() < D.mash) inp.p = true; return inp; }
+  if (f.state === "choked" || f.state === "mounted") { if (Math.random() < D.mash * 0.5) inp.p = true; return inp; }
+  if (f.state === "choking") { if (Math.random() < D.mash * 0.7) inp.p = true; return inp; }
+  if (f.state === "mount") {
+    if (--ai.next > 0) return inp;
+    ai.next = Math.round(D.react * 0.8 * rnd(0.7, 1.3));
+    if (f.sp >= 100) inp.s = true;
+    else if (Math.random() < 0.015 * f.def.stats.sub + (o.hp < 40 ? 0.03 : 0)) inp.k = true;
+    else inp.p = true;
+    return inp;
+  }
+  if (ai.blockT > 0) { ai.blockT--; inp.block = true; return inp; }
+  const dx = o.x - f.x, dist = Math.abs(dx), dir = Math.sign(dx) || 1, dz = o.y - f.y, aligned = Math.abs(dz) < 5;
+  const zmove = Math.abs(dz) > 3 ? Math.sign(dz) : 0;
+  if (o.state === "atk" && o.move && o.move.kind === "strike" && o.t < o.mt.st && dist < o.move.range + 8 && Math.random() < D.block * 0.12) {
+    ai.blockT = 14; inp.block = true; return inp;
+  }
+  inp.mx = ai.mx; inp.mz = zmove;
+  if (--ai.next > 0) return inp;
+  ai.next = Math.round(D.react * rnd(0.6, 1.4)); ai.mx = 0;
+  const oDown = o.state === "down";
+  if (o.state === "ko" || o.state === "choked" || o.state === "mounted") return inp;
+  if (oDown) {
+    if (dist < 28 && aligned) {
+      const pm = 0.2 + (f.def.id === "oso" ? 0.2 : f.def.id === "cobra" ? 0.25 : 0);
+      if (f.def.id === "cobra" && f.sp >= 100) inp.s = true; else if (Math.random() < pm) inp.t = true; else inp.p = true;
+    }
+    else ai.mx = dist < 20 ? 0 : dir;
+  } else if (!aligned && dist < 40) {
+    ai.mx = dist < 16 ? -dir : 0;
+  } else if (f.sp >= 100 && dist <= f.def.sp.range && (f.def.id !== "cobra" || Math.random() < 0.3)) {
+    inp.s = true;
+  } else if (f.sta < 30 && Math.random() < 0.75) {
+    ai.mx = -dir;
+  } else if (dist > 32) {
+    ai.mx = dir;
+  } else {
+    const st = f.def.id, r = Math.random();
+    const wk = st === "sombra" ? 0.38 : 0.24, wt = st === "oso" ? 0.30 : st === "cobra" ? 0.22 : 0.12;
+    if (r < wt) inp.t = true;
+    else if (r < wt + wk) inp.k = true;
+    else if (r < 0.86) inp.p = true;
+    else if (r < 0.94) ai.mx = -dir;
+    else { ai.blockT = 16; inp.block = true; }
+    if (dist < 14 && !inp.t) ai.mx = -dir;
+  }
+  inp.mx = ai.mx; inp.mz = zmove;
+  return inp;
+}
+
+function updateFighter(f, o, canAct){
+  if (f.flash > 0) f.flash--;
+  if (f.inv > 0) f.inv--;
+  f.k++;
+  const inp = canAct ? readInput(f) : { mx:0, mz:0, block:false, p:false, k:false, t:false, s:false };
+  for (const a of ["p", "k", "t", "s"]) if (inp[a]) f.buf = { a, ttl: 8 };
+  if (f.buf && --f.buf.ttl <= 0) f.buf = null;
+
+  switch (f.state) {
+    case "idle": case "walk": case "block": {
+      if (Math.abs(o.x - f.x) > 2) f.face = o.x >= f.x ? 1 : -1;
+      f.sta = Math.min(100, f.sta + (f.state === "block" ? 0.05 : f.state === "walk" ? 0.11 : 0.15) * f.def.stats.cardio * (0.6 + 0.4 * f.hp / 100));
+      if (f.buf && canAct) { const a = f.buf.a; f.buf = null; startMove(f, a, o); if (f.state === "atk") break; }
+      if (inp.block) { f.state = "block"; f.vx = f.vz = 0; break; }
+      f.state = inp.mx || inp.mz ? "walk" : "idle";
+      { const back = inp.mx === -f.face, tired = f.sta < 20 ? 0.7 : 1, sp = f.def.stats.speed * tired;
+        f.vx = inp.mx * 1.15 * sp * (back ? 0.85 : 1); f.vz = inp.mz * 0.75 * sp; }
+      break;
+    }
+    case "atk": {
+      f.t++;
+      const m = f.move;
+      if (f.t === f.mt.st) sfx.whoosh();
+      if (m.lunge && f.t < f.mt.st + f.mt.ac) f.vx = f.t >= f.mt.st - 3 ? m.lunge * f.face : 0;
+      else f.vx *= 0.7;
+      if (f.t >= f.mt.st && f.t < f.mt.st + f.mt.ac && !f.hitDone) tryHit(f, o, m);
+      if (f.t >= f.mt.tot && f.state === "atk") { f.state = "idle"; f.move = null; }
+      break;
+    }
+    case "hit": case "bstun":
+      f.vx *= 0.85; if (--f.t <= 0) f.state = "idle"; break;
+    case "down":
+      f.vx *= 0.82;
+      if (inp.p || inp.k || inp.t || inp.s) f.t -= 3;
+      if (--f.t <= 0) { f.state = "getup"; f.t = 14; f.inv = 30; }
+      break;
+    case "getup":
+      f.vx = 0; if (--f.t <= 0) f.state = "idle"; break;
+    case "ko": case "win": case "choked": case "choking": case "mount": case "mounted":
+      f.vx *= 0.85; break;
+  }
+  if (f.state !== "idle" && f.state !== "walk") f.vz = 0;
+  f.x += f.vx; f.y += f.vz;
+  inOct(f);
+}
+function separate(){
+  const [a, b] = game.f;
+  if (game.sub || game.gnd || a.state === "down" || b.state === "down" || a.state === "ko" || b.state === "ko") return;
+  const dx = b.x - a.x, min = 13;
+  if (Math.abs(dx) < min && Math.abs(b.y - a.y) < 6) {
+    const push = (min - Math.abs(dx)) / 2, s = Math.sign(dx) || 1;
+    a.x -= push * s; b.x += push * s; inOct(a); inOct(b);
+  }
+}
+function endFight(winner, method, detail=""){
+  if (game.phase === "end") return;
+  const loser = game.f[1 - winner.side];
+  game.phase = "end"; game.t = 0; game.sub = null; game.gnd = null;
+  loser.state = method === "SUMISIÓN" ? "down" : "ko"; loser.t = 9999; loser.move = null;
+  if (["choking", "mount"].includes(winner.state)) { winner.state = "getup"; winner.t = 30; }
+  game.result = { winner: winner.side, method, detail, round: game.round, clock: clockText(ROUNDT - game.timer) };
+  const big = method === "SUMISIÓN" ? "¡SUMISIÓN!" : method === "KO" && detail === "directo" ? "¡KO DIRECTO!" : method;
+  const sub = method === "SUMISIÓN" ? "¡SE RINDE! · " + detail : method === "TKO" ? detail.toUpperCase() : "";
+  banner(big, 150, "#ff5a4f", sub);
+  sfx.crowd(); sfx.bell();
+}
+function decision(){
+  const cards = [0, 1, 2].map(() => [0, 0]);
+  for (let r = 0; r < ROUNDS; r++) {
+    for (const c of cards) {
+      const s0 = game.rd[r][0] + 8 * game.rkd[r][0] + rnd(-4, 4), s1 = game.rd[r][1] + 8 * game.rkd[r][1] + rnd(-4, 4);
+      const diffR = Math.abs(s0 - s1);
+      if (diffR < 1.5) { c[0] += 10; c[1] += 10; }
+      else { const w = s0 > s1 ? 0 : 1; c[w] += 10; c[1 - w] += diffR > 35 ? 8 : 9; }
+    }
+  }
+  const votes = cards.map(c => c[0] > c[1] ? 0 : c[1] > c[0] ? 1 : -1);
+  const v0 = votes.filter(v => v === 0).length, v1 = votes.filter(v => v === 1).length;
+  let winner = -1, method;
+  if (v0 > v1 && v0 >= 2) { winner = 0; method = v0 === 3 ? "DECISIÓN UNÁNIME" : v1 === 1 ? "DECISIÓN DIVIDIDA" : "DECISIÓN MAYORITARIA"; }
+  else if (v1 > v0 && v1 >= 2) { winner = 1; method = v1 === 3 ? "DECISIÓN UNÁNIME" : v0 === 1 ? "DECISIÓN DIVIDIDA" : "DECISIÓN MAYORITARIA"; }
+  else method = "EMPATE";
+  game.phase = "end"; game.t = 0;
+  game.result = { winner, method, round: 3, clock: "5:00", cards };
+  banner(winner < 0 ? "EMPATE" : "DECISIÓN", 150, "#f2c14e");
+  sfx.crowd();
+}
+
+function step(){
+  const g = game;
+  if (g.hitstop > 0) { g.hitstop--; pressed.clear(); touchHit.clear(); return; }
+  const [a, b] = g.f;
+  g.t++;
+  if (g.banner && ++g.banner.t > g.banner.dur) g.banner = null;
+  switch (g.phase) {
+    case "intro":
+      if (g.t === 1) banner("ROUND " + g.round, 70, "#f2c14e", g.demo ? "" : "5:00");
+      if (g.t === 72) banner("¡A PELEAR!", 40, "#ff5a4f");
+      updateFighter(a, b, false); updateFighter(b, a, false);
+      if (g.t >= 100) { g.phase = "fight"; g.t = 0; }
+      break;
+    case "fight":
+      g.fc++;
+      if (g.gnd) { updateMount(); updateFighter(a, b, false); updateFighter(b, a, false); }
+      else if (g.sub) { updateSub(); updateFighter(a, b, false); updateFighter(b, a, false); }
+      else { updateFighter(a, b, true); if (g.phase === "fight") updateFighter(b, a, true); }
+      separate();
+      if (g.phase === "fight" && --g.timer <= 0) {
+        g.timer = 0; g.phase = "roundEnd"; g.t = 0; g.sub = null; g.gnd = null;
+        for (const f of g.f) if (["choked", "choking", "mount", "mounted"].includes(f.state)) { f.state = "getup"; f.t = 14; }
+        banner("¡TIEMPO!", 90, "#f2c14e"); sfx.bell();
+      }
+      break;
+    case "roundEnd":
+      updateFighter(a, b, false); updateFighter(b, a, false); separate();
+      if (g.t >= 110) {
+        if (g.round >= ROUNDS) decision();
+        else {
+          g.round++; g.timer = ROUNDT; g.phase = "intro"; g.t = 0;
+          for (const f of g.f) {
+            f.hp = Math.min(100, f.hp + 15); f.sta = Math.min(100, f.sta + 55 * f.def.stats.cardio); f.state = "idle"; f.move = null; f.vx = f.vz = 0; f.y = CY;
+            f.x = f.side ? 205 : 115; f.face = f.side ? -1 : 1; f.buf = null;
+          }
+          if (!g.demo) sfx.bell();
+        }
+      }
+      break;
+    case "end": {
+      updateFighter(a, b, false); updateFighter(b, a, false);
+      const r = g.result;
+      if (g.t === 60 && r.winner >= 0) { const w = g.f[r.winner]; w.state = "win"; w.vx = 0; }
+      if (g.t === 170) { if (g.demo) startDemo(); else showResult(); }
+      break;
+    }
+  }
+  for (const f of g.f) f.shown += (f.hp - f.shown) * (f.shown > f.hp ? 0.05 : 1);
+  for (const p of g.parts) { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--; }
+  g.parts = g.parts.filter(p => p.life > 0);
+  for (const t of g.texts) { t.y -= 0.35; t.life--; }
+  g.texts = g.texts.filter(t => t.life > 0);
+  if (g.shake > 0) g.shake *= 0.85, g.shake < 0.3 && (g.shake = 0);
+  pressed.clear(); touchHit.clear();
+}
+
+/* ---------- Pintado ---------- */
+function txt(s, x, y, size, col, align="center"){
+  ctx.font = size + "px Silkscreen, monospace"; ctx.textAlign = align; ctx.textBaseline = "top";
+  ctx.fillStyle = "#000";
+  for (const [dx, dy] of [[-1,0],[1,0],[0,-1],[0,1],[1,1]]) ctx.fillText(s, x + dx, y + dy);
+  ctx.fillStyle = col; ctx.fillText(s, x, y);
+}
+function drawHUD(){
+  const g = game;
+  for (const f of g.f) {
+    const right = f.side === 1, bw = 118, x = right ? W - 8 - bw : 8, y = 6;
+    const fill = n => right ? x + bw - n : x;
+    ctx.fillStyle = "#000"; ctx.fillRect(x - 1, y - 1, bw + 2, 9);
+    ctx.fillStyle = "#3a1414"; ctx.fillRect(x, y, bw, 7);
+    let n = Math.round(f.shown / 100 * bw); ctx.fillStyle = "#fff"; ctx.fillRect(fill(n), y, n, 7);
+    n = Math.round(f.hp / 100 * bw);
+    ctx.fillStyle = f.hp > 50 ? "#f2c14e" : f.hp > 25 ? "#f08a24" : "#e0443e"; ctx.fillRect(fill(n), y, n, 7);
+    ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.fillRect(fill(n), y, n, 1);
+    ctx.fillStyle = "#000"; ctx.fillRect(x - 1, y + 8, bw + 2, 4);
+    n = Math.round(f.sta / 100 * bw); ctx.fillStyle = "#4fc3f7"; ctx.fillRect(fill(n), y + 9, n, 2);
+    const sw = 56, sx = right ? W - 8 - sw : 8;
+    ctx.fillStyle = "#000"; ctx.fillRect(sx - 1, y + 13, sw + 2, 5);
+    n = Math.round(f.sp / 100 * sw);
+    ctx.fillStyle = f.sp >= 100 ? (Math.floor(g.t / 6) % 2 ? "#ff7be0" : "#ffffff") : "#8a4fd0";
+    ctx.fillRect(right ? sx + sw - n : sx, y + 14, n, 3);
+    if (f.sp >= 100) txt("ESPECIAL", right ? sx - 4 : sx + sw + 4, y + 11, 8, "#ff7be0", right ? "right" : "left");
+    const label = f.def.short + (f.ctrl === "cpu" && !g.demo ? " · CPU" : f.ctrl === "p1" ? " · J1" : f.ctrl === "p2" ? " · J2" : "");
+    txt(label, right ? W - 8 : 8, y + 20, 8, right ? "#9cc0ff" : "#ff9d97", right ? "right" : "left");
+    if (f.sta < 20 && Math.floor(g.t / 10) % 2) txt("CANSADO", right ? W - 8 - bw : 8 + bw, y + 9, 8, "#4fc3f7", right ? "left" : "right");
+  }
+  ctx.fillStyle = "#000"; ctx.fillRect(W / 2 - 19, 2, 38, 24);
+  ctx.fillStyle = "#1c2033"; ctx.fillRect(W / 2 - 18, 3, 36, 22);
+  txt("R" + g.round + "/" + ROUNDS, W / 2, 4, 8, "#a3a9bf");
+  txt(clockText(g.timer), W / 2, 13, 8, g.timer < 600 && g.phase === "fight" ? "#ff5a4f" : "#ffffff");
+  if (g.demo) txt("DEMO · ELIGE MODO PARA JUGAR", W / 2, 58, 8, "#ffffff");
+}
+function draw(){
+  const g = game;
+  ctx.save();
+  if (g.shake) ctx.translate(Math.round(rnd(-g.shake, g.shake)), Math.round(rnd(-g.shake, g.shake) * 0.6));
+  ctx.drawImage(bg, 0, 0);
+  if (Math.random() < 0.35) { const d = crowdDots[Math.floor(Math.random() * crowdDots.length)]; ctx.fillStyle = "#fff"; ctx.fillRect(d[0], d[1], 2, 2); }
+  const order = [...g.f].sort((p, q) => (p.y - q.y) || ((p.state === "atk" || p.state === "choking") - (q.state === "atk" || q.state === "choking")));
+  for (const f of g.f) {
+    ctx.fillStyle = "rgba(0,0,0,.25)";
+    const lying = f.state === "down" || f.state === "ko" || f.state === "choked";
+    const w = lying ? 38 : 18;
+    ctx.fillRect(Math.round(f.x - w / 2 - (lying ? 7 * f.face : 0)), Math.round(f.y) - 1, w, 3);
+  }
+  for (const f of order) {
+    drawFighter(ctx, f.def, f.x, f.y, f.face, poseOf(f), f.k, { flash: f.flash > 0 && f.flash % 2 === 1, alt: f.alt });
+    if (f.state === "ko") {
+      for (let i = 0; i < 3; i++) {
+        const a = g.t * 0.08 + i * 2.1, hx = f.x - 20 * f.face;
+        ctx.fillStyle = i % 2 ? "#ffd34d" : "#fff";
+        ctx.fillRect(Math.round(hx + Math.cos(a) * 9), Math.round(f.y - 17 + Math.sin(a) * 2), 2, 2);
+      }
+    }
+  }
+  drawFrontCage();
+  for (const p of g.parts) { ctx.fillStyle = p.col; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s); }
+  for (const t of g.texts) { ctx.globalAlpha = Math.min(1, t.life / 15); txt(t.txt, Math.round(t.x), Math.round(t.y), 8, t.col); ctx.globalAlpha = 1; }
+  ctx.restore();
+  drawHUD();
+  if (g.gnd) {
+    const m = g.gnd, bw = 70, x = W / 2 - bw / 2;
+    if (m.a.ctrl !== "cpu") txt(mode === "1p" ? "A GOLPEA · S SUMISIÓN · F ESPECIAL" : "PUÑO GOLPEA · PATADA SUMISIÓN", W / 2, 46, 8, "#f2c14e");
+    else if (m.d.ctrl !== "cpu" && Math.floor(g.t / 8) % 2) txt("¡MACHACA BOTONES PARA ESCAPAR!", W / 2, 46, 8, "#7fe3ff");
+    ctx.fillStyle = "#000"; ctx.fillRect(x - 1, 56, bw + 2, 6);
+    ctx.fillStyle = "#7fe3ff"; ctx.fillRect(x, 57, Math.round(Math.min(1, m.esc / m.need) * bw), 4);
+  }
+  if (g.sub) {
+    const s = g.sub, bw = 90, x = W / 2 - bw / 2;
+    const human = s.a.ctrl !== "cpu" || s.d.ctrl !== "cpu";
+    if (human && Math.floor(g.t / 8) % 2) txt(s.d.ctrl !== "cpu" ? "¡MACHACA PARA ESCAPAR!" : "¡MACHACA PARA APRETAR!", W / 2, 46, 8, "#ff7be0");
+    ctx.fillStyle = "#000"; ctx.fillRect(x - 1, 56, bw + 2, 7);
+    ctx.fillStyle = "#1e6f8f"; ctx.fillRect(x, 57, bw, 5);
+    const v = Math.round(clamp(s.v, 0, 100) / 100 * bw);
+    ctx.fillStyle = "#ff5a8a"; ctx.fillRect(x, 57, v, 5);
+    ctx.fillStyle = "#fff"; ctx.fillRect(x + v - 1, 55, 2, 9);
+    txt("ESCAPA", x - 4, 56, 8, "#7fe3ff", "right"); txt("RINDE", x + bw + 4, 56, 8, "#ff5a8a", "left");
+  }
+  if (g.banner) {
+    const b = g.banner, k = Math.min(1, b.t / 8);
+    ctx.fillStyle = "rgba(0,0,0," + 0.45 * k + ")"; ctx.fillRect(0, 66, W, 34);
+    txt(b.txt, W / 2, 70, b.txt.length > 12 ? 16 : 24, b.col);
+    if (b.sub) txt(b.sub, W / 2, 92, 8, "#ffffff");
+  }
+}
+
+/* ---------- Bucle ---------- */
+let last = performance.now(), acc = 0;
+function loop(now){
+  acc += Math.min(100, now - last); last = now;
+  while (acc >= 1000 / 60) { if (game && !paused) step(); acc -= 1000 / 60; }
+  if (game) draw();
+  requestAnimationFrame(loop);
+}
+
+/* ---------- Pantallas ---------- */
+const screens = ["scrTitle", "scrSelect", "scrPause", "scrResult"];
+function show(id){ for (const s of screens) $(s).hidden = s !== id; }
+function setDiff(d){ diff = d; document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c.dataset.d === d))); }
+document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => setDiff(c.dataset.d)));
+
+const STATROWS = [["Puños", "punch"], ["Patadas", "kick"], ["Derribo", "td"], ["Suelo", "sub"], ["Velocidad", "speed"], ["Mentón", "chin"], ["Cardio", "cardio"]];
+let focusIdx = 0;
+function statPct(key, v){ if (key === "chin") v = 2 - v; return Math.round(clamp((v - 0.6) / 1.0, 0.08, 1) * 100); }
+function showDetail(i){
+  focusIdx = i; const d = ROSTER[i];
+  $("detail").innerHTML = "<div><h3>" + d.name + '</h3><span class="cls">' + d.cls + " · " + d.kg + " kg</span> <span class=\"cls\">" + d.style + "</span>" +
+    "<p>" + d.desc + "</p><p>Especial: <b>" + d.sp.name.charAt(0) + d.sp.name.slice(1).toLowerCase() + "</b></p></div>" +
+    '<div class="stats">' + STATROWS.map(([n, k]) => "<span>" + n + '</span><div class="bar"><div style="width:' + statPct(k, d.stats[k]) + '%"></div></div>').join("") + "</div>";
+}
+function buildRoster(){
+  const box = $("roster");
+  ROSTER.forEach((d, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "card"; b.id = "card-" + d.id;
+    b.setAttribute("aria-label", d.name + ", " + d.cls);
+    const pc = document.createElement("canvas"); pc.width = 48; pc.height = 52;
+    const c2 = pc.getContext("2d"); c2.imageSmoothingEnabled = false;
+    drawFighter(c2, d, 23, 49, 1, "idle", 0, {});
+    b.innerHTML = '<span class="badge b1" hidden>J1</span><span class="badge b2" hidden>J2</span>';
+    b.appendChild(pc);
+    b.insertAdjacentHTML("beforeend", '<span class="nm">' + d.short + '</span><span class="kg">' + d.kg + " kg</span>");
+    b.addEventListener("click", () => choose(i));
+    b.addEventListener("mouseenter", () => showDetail(i));
+    b.addEventListener("focus", () => showDetail(i));
+    box.appendChild(b);
+  });
+  showDetail(0);
+}
+function refreshSelect(){
+  ROSTER.forEach((d, i) => {
+    const c = $("card-" + d.id);
+    c.classList.toggle("p1", picks[0] === i); c.classList.toggle("p2", picks[1] === i);
+    c.querySelector(".b1").hidden = picks[0] !== i; const b2 = c.querySelector(".b2"); b2.hidden = picks[1] !== i;
+    b2.textContent = mode === "1p" ? "CPU" : "J2";
+  });
+  const who2 = mode === "1p" ? "rival (CPU)" : "Jugador 2";
+  $("pickMsg").innerHTML = picking === 0 ? '<span class="c1">Jugador 1</span>, elige luchador'
+    : picks[1] === null ? 'Ahora elige al <span class="c2">' + who2 + "</span>" : "¡Listos! Entrad a la jaula";
+  $("bFight").disabled = picks[0] === null || picks[1] === null;
+  $("bRandom").hidden = mode !== "1p";
+}
+function choose(i){
+  audio();
+  showDetail(i);
+  if (picking === 0) { picks[0] = i; picking = 1; }
+  else { picks[1] = i; }
+  refreshSelect();
+  if (picks[1] !== null) $("bFight").focus();
+}
+function openSelect(m){
+  audio(); mode = m; picks = [null, null]; picking = 0; show("scrSelect"); refreshSelect();
+}
+function fight(){
+  if (picks[0] === null || picks[1] === null) return;
+  lastSetup = { a: ROSTER[picks[0]], b: ROSTER[picks[1]], ctrl: mode === "1p" ? "cpu" : "p2" };
+  show(null); paused = false; keys.clear(); pressed.clear();
+  newGame(lastSetup.a, lastSetup.b, lastSetup.ctrl, false);
+  cv.focus?.();
+}
+function showResult(){
+  const r = game.result, g = game;
+  const nm = i => g.f[i].def.name + (g.f[i].ctrl === "cpu" ? " (CPU)" : g.f[i].ctrl === "p1" ? " (J1)" : " (J2)");
+  $("rTitle").textContent = r.winner < 0 ? "EMPATE" : "GANA " + nm(r.winner).toUpperCase();
+  $("rHow").textContent = r.cards ? r.method.charAt(0) + r.method.slice(1).toLowerCase() + " tras 3 rounds"
+    : "Por " + (r.method === "SUMISIÓN" ? "sumisión (" + r.detail.toLowerCase() + ")" : r.method === "TKO" ? "TKO (" + r.detail + ")" : r.detail === "directo" ? "KO directo" : "KO") + " · Round " + r.round + " · " + r.clock;
+  const J = $("rJudges"); J.innerHTML = "";
+  if (r.cards) {
+    const names = ["Juez A", "Juez B", "Juez C"];
+    r.cards.forEach((c, i) => {
+      const w = r.winner < 0 ? 0 : r.winner, s = c[w] + "-" + c[1 - w];
+      J.insertAdjacentHTML("beforeend", '<div class="judge"><em>' + names[i] + "</em>" + s + "</div>");
+    });
+  }
+  const [a, b] = g.f;
+  const pct = f => f.st.thrown ? Math.round(f.st.landed / f.st.thrown * 100) + " %" : "–";
+  $("rStats").innerHTML =
+    "<tr><td>" + a.def.short + "</td><th></th><td>" + b.def.short + "</td></tr>" +
+    "<tr><td>" + a.st.landed + "/" + a.st.thrown + "</td><th>Golpes conectados</th><td>" + b.st.landed + "/" + b.st.thrown + "</td></tr>" +
+    "<tr><td>" + pct(a) + "</td><th>Precisión</th><td>" + pct(b) + "</td></tr>" +
+    "<tr><td>" + a.st.td + "</td><th>Derribos</th><td>" + b.st.td + "</td></tr>" +
+    "<tr><td>" + a.st.kd + "</td><th>Caídas por golpe</th><td>" + b.st.kd + "</td></tr>" +
+    "<tr><td>" + a.st.mount + "</td><th>Montadas</th><td>" + b.st.mount + "</td></tr>";
+  show("scrResult"); $("bAgain").focus();
+}
+function pauseOn(){ if (!game || game.demo || paused) return; paused = true; show("scrPause"); $("bResume").focus(); }
+function togglePause(){
+  if (!game || game.demo) return;
+  if (!$("scrResult").hidden || !$("scrSelect").hidden || !$("scrTitle").hidden) return;
+  if (paused) { paused = false; show(null); } else pauseOn();
+}
+function toMenu(){ paused = false; show("scrTitle"); startDemo(); }
+
+$("b1p").addEventListener("click", () => openSelect("1p"));
+$("b2p").addEventListener("click", () => openSelect("2p"));
+$("bBack").addEventListener("click", () => { if (picking === 1) { picking = 0; picks = [null, null]; refreshSelect(); } else show("scrTitle"); });
+$("bRandom").addEventListener("click", () => { if (picks[0] === null) picks[0] = Math.floor(Math.random() * ROSTER.length); picking = 1; picks[1] = Math.floor(Math.random() * ROSTER.length); refreshSelect(); });
+$("bFight").addEventListener("click", fight);
+$("bResume").addEventListener("click", () => { paused = false; show(null); });
+$("bQuit").addEventListener("click", toMenu);
+$("bAgain").addEventListener("click", () => { show(null); newGame(lastSetup.a, lastSetup.b, lastSetup.ctrl, false); });
+$("bPick").addEventListener("click", () => openSelect(mode));
+$("bMenu").addEventListener("click", toMenu);
+$("bMute").addEventListener("click", () => { audio(); muted = !muted; $("bMute").textContent = "Sonido: " + (muted ? "no" : "sí"); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) pauseOn(); });
+
+/* ---------- Arranque ---------- */
+const fontsReady = document.fonts ? Promise.race([document.fonts.load("8px Silkscreen"), new Promise(r => setTimeout(r, 1500))]) : Promise.resolve();
+fontsReady.catch(() => {}).then(() => {
+  buildBg(); buildRoster(); setDiff("normal"); startDemo(); show("scrTitle");
+  requestAnimationFrame(t => { last = t; loop(t); });
+});
+})();
+</script>
+
+</body>
+</html>
