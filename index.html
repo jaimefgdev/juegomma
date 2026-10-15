@@ -30,7 +30,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:16px;
 .iconbtn{font-family:var(--fd);font-size:12px;background:#22263a;color:var(--ink);border:3px solid #000;padding:6px 10px;cursor:pointer}
 .stage{position:relative;width:100%;aspect-ratio:16/9;background:#000;border:3px solid #000;box-shadow:0 0 0 3px var(--line), 0 12px 0 rgba(0,0,0,.35)}
 #cv{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
-.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:12px;
   background:rgba(7,8,13,.74);padding:16px;overflow:auto;text-align:center}
 .ov h2{font-family:var(--fd);font-size:28px;margin:0;color:var(--gold);text-shadow:3px 3px 0 #000;text-wrap:balance;line-height:1.15}
 .ov p{margin:0;color:var(--mute);max-width:56ch}
@@ -50,7 +50,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:16px;
 .roster{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;width:100%;max-width:860px}
 .card{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px 6px;background:var(--panel);
   border:3px solid #000;box-shadow:0 0 0 2px var(--line);color:var(--ink);font-family:var(--fd);font-size:10px;cursor:pointer;min-width:0}
-.card canvas{width:100%;max-width:64px;aspect-ratio:48/52;image-rendering:pixelated;background:linear-gradient(#262b42,#1a1d2c)}
+.card canvas{width:100%;max-width:52px;aspect-ratio:48/52;image-rendering:pixelated;background:linear-gradient(#262b42,#1a1d2c)}
 .card span.nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card span.kg{font-family:var(--fb);font-size:11px;color:var(--mute)}
 .card.p1{box-shadow:0 0 0 3px var(--red)} .card.p2{box-shadow:0 0 0 3px var(--blue)} .card.p1.p2{box-shadow:0 0 0 3px var(--red),0 0 0 6px var(--blue)}
@@ -222,11 +222,21 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /* ---------- Luchadores ---------- */
 const ROSTER = [
+  { id:"relampago", name:"«Relámpago» Duarte", short:"RELÁMPAGO", style:"Muay thai", cls:"Mosca", kg:57, build:-1,
+    desc:"El más rápido y el que más aguanta corriendo. Le falta pegada.",
+    skin:"#b97a4c", hair:"#2a1a10", shorts:"#f2f2f2", trim:"#1d9a50", gloves:"#1d9a50", alt:"#ff8a00",
+    stats:{ punch:0.8, kick:1.05, td:0.95, sub:1.15, speed:1.3, chin:1.12, cardio:1.4 },
+    sp:{ name:"RODILLAZO VOLADOR", kind:"strike", st:9, ac:6, rc:14, range:30, dmg:24, hs:30, kb:4, lunge:3, knock:true, unblock:true, pose:"kick", big:true, sta:20 } },
   { id:"matador", name:"«El Matador» Gorgadze", short:"MATADOR", style:"Boxeo y lucha", cls:"Pluma", kg:66, build:0,
     desc:"Hispano-georgiano. Completo: pega como un pesado, derriba y no se cansa.",
-    skin:"#e2ae86", hair:"#16110d", shorts:"#c8102e", trim:"#ffc400", gloves:"#151515", alt:"#f2f2f2",
+    skin:"#e2ae86", hair:"#16110d", shorts:"#ffffff", trim:"#c8102e", gloves:"#c8102e", alt:"#1b1b1b",
     stats:{ punch:1.35, kick:1.0, td:1.1, sub:1.0, speed:1.12, chin:0.92, cardio:1.15 },
-    sp:{ name:"GANCHO DEL MATADOR", kind:"strike", st:11, ac:4, rc:16, range:24, dmg:30, hs:30, kb:4, knock:true, unblock:true, pose:"punch", big:true, sta:22 } },
+    sp:{ name:"GANCHO DEL MATADOR", kind:"strike", st:11, ac:4, rc:16, range:24, dmg:30, hs:30, kb:4, knock:true, unblock:true, pose:"punch", big:true, sta:22, ko:0.14 } },
+  { id:"irlandes", name:"«El Irlandés» McGrath", short:"IRLANDÉS", style:"Boxeo de contragolpe", cls:"Ligero", kg:70, build:0, beard:true,
+    desc:"Bocazas y showman. Su izquierda duerme a cualquiera en segundos, pero en el tercer round se ahoga.",
+    skin:"#f2cfb1", hair:"#b5651d", shorts:"#169b62", trim:"#ff883e", gloves:"#111111", alt:"#ffffff",
+    stats:{ punch:1.4, kick:1.0, td:0.8, sub:0.75, speed:1.12, chin:1.0, cardio:0.8 },
+    sp:{ name:"IZQUIERDA LETAL", kind:"strike", st:9, ac:4, rc:16, range:25, dmg:30, hs:30, kb:4, knock:true, unblock:true, pose:"punch", big:true, sta:20, ko:0.22 } },
   { id:"aguila", name:"«Águila» Nurmagov", short:"ÁGUILA", style:"Sambo y lucha", cls:"Ligero", kg:70, build:0, beard:true,
     desc:"Daguestaní. Te lleva al suelo, te monta y no te deja levantarte. Cardio infinito.",
     skin:"#e9c2a0", hair:"#24170f", shorts:"#1b1b1b", trim:"#d4af37", gloves:"#1b1b1b", alt:"#7b1e1e",
@@ -237,16 +247,26 @@ const ROSTER = [
     skin:"#ecc29a", hair:"#121212", shorts:"#2468d6", trim:"#e8f0ff", gloves:"#1b1b1b", alt:"#ffb000",
     stats:{ punch:0.95, kick:1.35, td:0.75, sub:0.7, speed:1.15, chin:1.05, cardio:1.0 },
     sp:{ name:"PATADA GIRATORIA", kind:"strike", st:12, ac:5, rc:16, range:35, dmg:27, hs:30, kb:4.5, knock:true, unblock:true, pose:"spin", big:true, sta:22 } },
-  { id:"relampago", name:"«Relámpago» Duarte", short:"RELÁMPAGO", style:"Muay thai", cls:"Mosca", kg:57, build:-1,
-    desc:"El más rápido y el que más aguanta corriendo. Le falta pegada.",
-    skin:"#b97a4c", hair:"#2a1a10", shorts:"#f2f2f2", trim:"#1d9a50", gloves:"#1d9a50", alt:"#ff8a00",
-    stats:{ punch:0.8, kick:1.05, td:0.95, sub:1.15, speed:1.3, chin:1.12, cardio:1.4 },
-    sp:{ name:"RODILLAZO VOLADOR", kind:"strike", st:9, ac:6, rc:14, range:30, dmg:24, hs:30, kb:4, lunge:3, knock:true, unblock:true, pose:"kick", big:true, sta:20 } },
+  { id:"espanol", name:"«El Español» Fernández", short:"ESPAÑOL", style:"Boxeo y defensa personal", cls:"Wélter", kg:77, build:0,
+    desc:"De Collado Villalba, 1,70 m y fuerte. Diez años de jefe de equipo en seguridad: no se arruga y aguanta lo que le echen.",
+    skin:"#dcae88", hair:"#2b1d14", shorts:"#c60b1e", trim:"#ffc400", gloves:"#ffc400", alt:"#1b1b1b",
+    stats:{ punch:1.2, kick:1.0, td:1.15, sub:1.05, speed:1.05, chin:0.86, cardio:1.15 },
+    sp:{ name:"DERECHAZO DE VILLALBA", kind:"strike", st:11, ac:4, rc:16, range:25, dmg:31, hs:30, kb:4, knock:true, unblock:true, pose:"punch", big:true, sta:22, ko:0.14 } },
+  { id:"rush", name:"«Rush» Saint-Laurent", short:"RUSH", style:"Kárate y lucha", cls:"Wélter", kg:77, build:0,
+    desc:"Canadiense, leyenda del wélter. El mejor derribando de la jaula y con un cardio que no se acaba.",
+    skin:"#f0c9a6", hair:"#2a1a10", shorts:"#ffffff", trim:"#d52b1e", gloves:"#d52b1e", alt:"#1b1b1b",
+    stats:{ punch:1.0, kick:1.05, td:1.5, sub:1.05, speed:1.08, chin:0.95, cardio:1.35 },
+    sp:{ name:"PUÑO SUPERMAN", kind:"strike", st:10, ac:5, rc:15, range:30, dmg:26, hs:30, kb:4, lunge:2.4, knock:true, unblock:true, pose:"punch", big:true, sta:20 } },
   { id:"cobra", name:"«Cobra» Silva", short:"COBRA", style:"Jiu-jitsu", cls:"Wélter", kg:77, build:0,
     desc:"Peligrosa en el suelo. Con el rival tumbado, su especial es un mataleón.",
     skin:"#a96a40", hair:"#1a1a1a", shorts:"#7a3fc6", trim:"#f2c14e", gloves:"#3a3a3a", alt:"#1f8a8a",
     stats:{ punch:0.85, kick:0.9, td:1.1, sub:1.7, speed:1.05, chin:1.0, cardio:1.05 },
     sp:{ name:"MATALEÓN", kind:"sub", st:6, ac:8, rc:20, range:30, dmg:30, lunge:1.6, pose:"td", big:true, sta:18 } },
+  { id:"arana", name:"«Araña» Souza", short:"ARAÑA", style:"Muay thai y contragolpe", cls:"Medio", kg:84, build:0,
+    desc:"Leyenda brasileña del contragolpe. Esquiva bailando y te tumba con una patada frontal a la cara.",
+    skin:"#5b3a24", hair:"#2b1a10", shorts:"#ffd400", trim:"#009c3b", gloves:"#111111", alt:"#ffffff",
+    stats:{ punch:1.15, kick:1.25, td:0.85, sub:1.05, speed:1.15, chin:0.95, cardio:1.0 },
+    sp:{ name:"PATADA FRONTAL", kind:"strike", st:10, ac:5, rc:15, range:34, dmg:30, hs:30, kb:4.5, knock:true, unblock:true, pose:"kick", big:true, sta:20, ko:0.16 } },
   { id:"toro", name:"«El Toro» Ramos", short:"TORO", style:"Boxeo", cls:"Medio", kg:84, build:1,
     desc:"Manos de piedra y mentón de hierro, pero se cansa pronto.",
     skin:"#c98b5e", hair:"#2b1b12", shorts:"#cf2e2e", trim:"#ffd34d", gloves:"#b81f1f", alt:"#f2f2f2",
@@ -257,6 +277,26 @@ const ROSTER = [
     skin:"#f0cdb0", hair:"#6b4a2b", shorts:"#1f4fa8", trim:"#d62828", gloves:"#d62828", alt:"#2f8f43",
     stats:{ punch:1.1, kick:1.2, td:1.1, sub:1.05, speed:0.95, chin:0.92, cardio:1.0 },
     sp:{ name:"PATADA ALTA", kind:"strike", st:12, ac:5, rc:16, range:34, dmg:30, hs:30, kb:4.5, knock:true, unblock:true, pose:"spin", big:true, sta:24 } },
+  { id:"chaman", name:"«Chamán» Pedreira", short:"CHAMÁN", style:"Kickboxing", cls:"Semipesado", kg:93, build:1,
+    desc:"Brasileño, excampeón de kickboxing. El gancho de izquierda más temido del planeta. En el suelo flojea.",
+    skin:"#9c6a45", hair:"#111111", shorts:"#e8e8e8", trim:"#009c3b", gloves:"#111111", alt:"#ffd400",
+    stats:{ punch:1.4, kick:1.3, td:0.7, sub:0.7, speed:0.95, chin:0.82, cardio:0.9 },
+    sp:{ name:"MARTILLO DE PIEDRA", kind:"strike", st:11, ac:4, rc:17, range:26, dmg:34, hs:30, kb:4.5, knock:true, unblock:true, pose:"punch", big:true, sta:24, ko:0.22 } },
+  { id:"mofletes", name:"«Mofletes» Almeyda", short:"MOFLETES", style:"Jiu-jitsu", cls:"Pesado", kg:100, build:1,
+    desc:"Brasileño, el mejor del jiu-jitsu de su generación. De pie es normalito; en el suelo, imposible.",
+    skin:"#d9a37a", hair:"#1a1a1a", shorts:"#1b1b1b", trim:"#2468d6", gloves:"#1b1b1b", alt:"#f2f2f2",
+    stats:{ punch:0.9, kick:0.8, td:1.25, sub:1.85, speed:0.95, chin:0.86, cardio:1.1 },
+    sp:{ name:"ESTRANGULACIÓN DE BRAZO", kind:"sub", st:6, ac:8, rc:20, range:30, dmg:30, lunge:1.6, pose:"td", big:true, sta:18 } },
+  { id:"zar", name:"«Zar» Emelin", short:"ZAR", style:"Sambo", cls:"Pesado", kg:106, build:2,
+    desc:"El último emperador ruso: impasible, golpea como un mazo y somete a cualquiera.",
+    skin:"#eed0b6", hair:"#7a5536", shorts:"#0d0d0d", trim:"#c8102e", gloves:"#2a2a2a", alt:"#1f4fa8",
+    stats:{ punch:1.25, kick:0.9, td:1.15, sub:1.25, speed:0.92, chin:0.78, cardio:1.0 },
+    sp:{ name:"MAZO SIBERIANO", kind:"strike", st:12, ac:4, rc:18, range:25, dmg:33, hs:30, kb:4.5, knock:true, unblock:true, pose:"punch", big:true, sta:24, ko:0.16 } },
+  { id:"huesos", name:"«Huesos» Jordan", short:"HUESOS", style:"Lucha y codazos", cls:"Pesado", kg:110, build:1,
+    desc:"Para muchos, el mejor de la historia: brazos larguísimos, codazos giratorios y lucha de élite.",
+    skin:"#6b4429", hair:"#111111", shorts:"#111111", trim:"#e0e0e0", gloves:"#111111", alt:"#c8102e",
+    stats:{ punch:1.15, kick:1.25, td:1.35, sub:1.15, speed:1.0, chin:0.82, cardio:1.15 },
+    sp:{ name:"CODAZO GIRATORIO", kind:"strike", st:11, ac:5, rc:16, range:28, dmg:31, hs:30, kb:4.5, knock:true, unblock:true, pose:"spin", big:true, sta:22, ko:0.14 } },
   { id:"oso", name:"«Oso» Petrov", short:"OSO", style:"Lucha libre", cls:"Pesado", kg:118, build:2,
     desc:"Ruso de 118 kilos. Lento y se ahoga, pero si te agarra te aplasta.",
     skin:"#f1c9a8", hair:"#d4ac5c", shorts:"#2f8f43", trim:"#111111", gloves:"#2a2a2a", alt:"#7b1e1e",
@@ -621,7 +661,7 @@ function tryHit(a, d, m){
     return;
   }
   if (m.kind === "sub") {
-    if (dDown) { startSub(a, d, "MATALEÓN", 60); return; }
+    if (dDown) { startSub(a, d, m.name, 60); return; }
     knockdown(a, d, 75); d.vx = a.face * 1.2; addDmg(a, d, 6); a.st.td++;
     say("¡AL SUELO!", d.x, d.y - 44, "#f2c14e"); sfx.thud(); game.shake = 4; game.hitstop = 5; return;
   }
@@ -654,7 +694,7 @@ function tryHit(a, d, m){
   const counter = d.state === "atk" && d.t < d.mt.st;
   if (counter) { dmg *= 2; say("¡CONTRA!", d.x, d.y - 44, "#7fe3ff"); }
   a.st.landed++; d.flash = 4; d.sta = Math.max(0, d.sta - dmg * 0.8);
-  const koBase = m.big ? 0.08 : m.stat === "kick" ? 0.006 : 0.003;
+  const koBase = m.big ? (m.ko || 0.08) : m.stat === "kick" ? 0.006 : 0.003;
   const koChance = koBase * (m.stat ? a.def.stats[m.stat] : 1) * clamp(1.25 - d.hp / 100, 0.2, 1.1) * (counter ? 2.5 : 1) * d.def.stats.chin;
   if (Math.random() < koChance) {
     addDmg(a, d, d.hp); d.vx = a.face * 2.5;
@@ -708,7 +748,7 @@ function updateMount(){
     startSub(a, d, "LLAVE DE BRAZO", 30); return;
   } else if (ia.s && a.sp >= 100) {
     a.sp = 0;
-    if (a.def.id === "cobra") { startSub(a, d, "MATALEÓN", 62); return; }
+    if (a.def.sp.kind === "sub") { startSub(a, d, a.def.sp.name, 62); return; }
     a.mp = 0; a.cd = sc(a, 20); g.un += 2; d.flash = 5;
     addDmg(a, d, 14 * d.def.stats.chin);
     say("¡CODAZO!", d.x, d.y - 44, "#ff7be0");
@@ -770,13 +810,13 @@ function cpuInput(f, o){
   if (o.state === "ko" || o.state === "choked" || o.state === "mounted") return inp;
   if (oDown) {
     if (dist < 28 && aligned) {
-      const pm = 0.2 + (f.def.id === "oso" ? 0.2 : f.def.id === "cobra" ? 0.25 : 0);
-      if (f.def.id === "cobra" && f.sp >= 100) inp.s = true; else if (Math.random() < pm) inp.t = true; else inp.p = true;
+      const pm = 0.1 + 0.4 * Math.max(0, f.def.stats.td - 0.8) + 0.2 * Math.max(0, f.def.stats.sub - 1);
+      if (f.def.sp.kind === "sub" && f.sp >= 100) inp.s = true; else if (Math.random() < pm) inp.t = true; else inp.p = true;
     }
     else ai.mx = dist < 20 ? 0 : dir;
   } else if (!aligned && dist < 40) {
     ai.mx = dist < 16 ? -dir : 0;
-  } else if (f.sp >= 100 && dist <= f.def.sp.range && (f.def.id !== "cobra" || Math.random() < 0.3)) {
+  } else if (f.sp >= 100 && dist <= f.def.sp.range && (f.def.sp.kind !== "sub" || Math.random() < 0.3)) {
     inp.s = true;
   } else if (f.sta < 30 && Math.random() < 0.75) {
     ai.mx = -dir;
@@ -784,7 +824,7 @@ function cpuInput(f, o){
     ai.mx = dir;
   } else {
     const st = f.def.id, r = Math.random();
-    const wk = st === "sombra" ? 0.38 : 0.24, wt = st === "oso" ? 0.30 : st === "cobra" ? 0.22 : 0.12;
+    const wk = 0.16 + 0.4 * Math.max(0, f.def.stats.kick - 0.9), wt = 0.08 + 0.35 * Math.max(0, f.def.stats.td - 0.85);
     if (r < wt) inp.t = true;
     else if (r < wt + wk) inp.k = true;
     else if (r < 0.86) inp.p = true;
