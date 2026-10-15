@@ -64,6 +64,19 @@ body{background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:16px;
 .stats{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 8px;font-size:13px;color:var(--mute);align-items:center}
 .bar{height:7px;background:#0c0e17;border:1px solid #000}
 .bar > div{height:100%;background:var(--gold)}
+.bracket{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 14px;width:100%;max-width:820px;align-items:center}
+.bcol{display:flex;flex-direction:column;gap:8px;height:100%}
+.bm{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:8px}
+#scrTour{background:rgba(7,8,13,.92)}
+.bcol h4{margin:0;font-family:var(--fd);font-size:12px;color:var(--gold);text-align:center}
+.match{background:var(--panel);border:3px solid #000;box-shadow:0 0 0 2px var(--line);font-size:13px;text-align:left}
+.match div{display:flex;justify-content:space-between;gap:6px;padding:2px 8px}
+.match div + div{border-top:2px solid var(--line)}
+.match .me{color:var(--red);font-family:var(--fd);font-size:11px}
+.match .lost{color:#5c6178;text-decoration:line-through}
+.match .won{color:var(--ink)}
+.match .tbd{color:#5c6178}
+.match small{color:var(--mute);font-size:11px;white-space:nowrap}
 .pick-msg{font-family:var(--fd);font-size:16px}
 .pick-msg .c1{color:var(--red)} .pick-msg .c2{color:var(--blue)}
 .cards{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
@@ -80,18 +93,35 @@ table.res td:first-child{color:var(--red);font-family:var(--fd)} table.res td:la
 .help li{margin:3px 0}
 .keys{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;font-size:15px;color:var(--mute);line-height:1.7}
 kbd{font-family:var(--fd);font-size:11px;background:#2a2f47;color:var(--ink);border:2px solid #000;border-bottom-width:4px;padding:1px 5px;white-space:nowrap}
-.touch{display:none;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:12px;user-select:none;-webkit-user-select:none;touch-action:none}
+.touch{display:none;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:12px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
 .touch .pad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,54px);gap:6px}
 .touch .acts{display:grid;grid-template-columns:repeat(3,72px);gap:6px}
 .tb{font-family:var(--fd);font-size:11px;border:3px solid #000;background:#2a2f47;color:var(--ink);display:flex;align-items:center;justify-content:center;height:54px;box-shadow:0 3px 0 #000;touch-action:none}
 .tb.on{background:var(--gold);color:#111}
 .tb.sp{background:#6b2fb3}
-@media (pointer:coarse){.touch{display:flex}}
+.tb.pz{background:#151826}
+.touch .mid{display:flex;flex-direction:column;align-items:center;gap:6px;align-self:center}
+.touch .mid .tb{width:54px;height:40px}
+.rotate{display:none;margin:10px 0 0;text-align:center;color:var(--mute);font-size:14px}
+button{touch-action:manipulation}
+body.touchmode.fighting .touch{display:flex}
+@media (orientation:portrait){ body.touchmode.fighting .rotate{display:block} }
+@media (orientation:landscape){
+  body.touchmode .top, body.touchmode .help{display:none}
+  body.touchmode .wrap{max-width:none;padding-block:4px}
+  body.touchmode .stage{width:min(100%, calc((100dvh - 14px) * 16 / 9));margin:0 auto}
+  body.touchmode.fighting .touch{position:fixed;left:0;right:0;bottom:0;margin:0;padding:0 14px calc(10px + env(safe-area-inset-bottom, 0px));pointer-events:none}
+  body.touchmode.fighting .touch > *{pointer-events:auto;opacity:.72}
+  body.touchmode .touch .pad{grid-template-columns:repeat(3,48px);grid-template-rows:repeat(2,48px)}
+  body.touchmode .touch .acts{grid-template-columns:repeat(3,64px)}
+  body.touchmode .tb{height:48px}
+}
 @media (max-width:720px){
   .stage{aspect-ratio:auto}
   #cv{height:auto;aspect-ratio:16/9}
   .ov{position:static;background:var(--panel);border-top:3px solid #000}
   .roster{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .bracket{grid-template-columns:1fr}
   .detail{grid-template-columns:1fr}
   .help{grid-template-columns:1fr}
   .logo{font-size:32px}
@@ -119,7 +149,8 @@ kbd{font-family:var(--fd);font-size:11px;background:#2a2f47;color:var(--ink);bor
       <div class="logo">OCTÁGONO<br>PIXEL</div>
       <p>Peleas de MMA en la jaula. Golpea, derriba y somete. Gana por KO, por sumisión o a los puntos.</p>
       <div class="row">
-        <button class="btn" id="b1p" type="button">1 jugador</button>
+        <button class="btn" id="b1p" type="button">Partida rápida</button>
+        <button class="btn red" id="bTour" type="button">Torneo</button>
         <button class="btn alt" id="b2p" type="button">2 jugadores</button>
       </div>
       <div class="chips" role="group" aria-label="Dificultad de la CPU">
@@ -141,6 +172,16 @@ kbd{font-family:var(--fd);font-size:11px;background:#2a2f47;color:var(--ink);bor
       </div>
     </div>
 
+    <div class="ov" id="scrTour" hidden>
+      <h2 id="tTitle">TORNEO</h2>
+      <p id="tMsg"></p>
+      <div class="bracket" id="bracket"></div>
+      <div class="row">
+        <button class="btn alt" id="tMenu" type="button">Menú</button>
+        <button class="btn red" id="tGo" type="button">¡A pelear!</button>
+      </div>
+    </div>
+
     <div class="ov" id="scrPause" hidden>
       <h2>PAUSA</h2>
       <div class="row">
@@ -155,6 +196,7 @@ kbd{font-family:var(--fd);font-size:11px;background:#2a2f47;color:var(--ink);bor
       <div class="cards" id="rJudges"></div>
       <table class="res" id="rStats"></table>
       <div class="row">
+        <button class="btn red" id="bNext" type="button" hidden>Ver el cuadro</button>
         <button class="btn red" id="bAgain" type="button">Revancha</button>
         <button class="btn alt" id="bPick" type="button">Cambiar luchadores</button>
         <button class="btn alt" id="bMenu" type="button">Menú</button>
@@ -167,11 +209,16 @@ kbd{font-family:var(--fd);font-size:11px;background:#2a2f47;color:var(--ink);bor
       <div></div><div class="tb" data-act="u">▲</div><div></div>
       <div class="tb" data-act="l">◀</div><div class="tb" data-act="d">▼</div><div class="tb" data-act="r">▶</div>
     </div>
+    <div class="mid">
+      <div class="tb pz" data-act="pause">II</div>
+    </div>
     <div class="acts">
       <div class="tb" data-act="p">PUÑO</div><div class="tb" data-act="k">PATADA</div><div class="tb" data-act="b">GUARDIA</div>
       <div class="tb" data-act="t">DERRIBO</div><div class="tb sp" data-act="s">ESPECIAL</div>
     </div>
   </div>
+
+  <p class="rotate">Gira el móvil para ver la jaula más grande.</p>
 
   <div class="help">
     <section>
@@ -213,7 +260,7 @@ kbd{font-family:var(--fd);font-size:11px;background:#2a2f47;color:var(--ink);bor
 <script>
 (() => {
 "use strict";
-const W = 320, H = 180, CX = 160, CY = 121, RX = 136, RZ = 42, ROUNDS = 3, ROUNDT = 60 * 60;
+const W = 320, H = 180, CX = 160, CY = 121, RX = 136, RZ = 42, ROUNDT = 60 * 60;
 const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 const $ = id => document.getElementById(id);
@@ -232,7 +279,7 @@ const ROSTER = [
     skin:"#e2ae86", hair:"#16110d", shorts:"#ffffff", trim:"#c8102e", gloves:"#c8102e", alt:"#1b1b1b",
     stats:{ punch:1.35, kick:1.0, td:1.1, sub:1.0, speed:1.12, chin:0.92, cardio:1.15 },
     sp:{ name:"GANCHO DEL MATADOR", kind:"strike", st:11, ac:4, rc:16, range:24, dmg:30, hs:30, kb:4, knock:true, unblock:true, pose:"punch", big:true, sta:22, ko:0.14 } },
-  { id:"irlandes", name:"«El Irlandés» McGrath", short:"IRLANDÉS", style:"Boxeo de contragolpe", cls:"Ligero", kg:70, build:0, beard:true,
+  { id:"irlandes", name:"«Notorious» McGrath", short:"NOTORIOUS", style:"Boxeo de contragolpe", cls:"Ligero", kg:70, build:0, beard:true,
     desc:"Bocazas y showman. Su izquierda duerme a cualquiera en segundos, pero en el tercer round se ahoga.",
     skin:"#f2cfb1", hair:"#b5651d", shorts:"#169b62", trim:"#ff883e", gloves:"#111111", alt:"#ffffff",
     stats:{ punch:1.4, kick:1.0, td:0.8, sub:0.75, speed:1.12, chin:1.0, cardio:0.8 },
@@ -277,7 +324,7 @@ const ROSTER = [
     skin:"#f0cdb0", hair:"#6b4a2b", shorts:"#1f4fa8", trim:"#d62828", gloves:"#d62828", alt:"#2f8f43",
     stats:{ punch:1.1, kick:1.2, td:1.1, sub:1.05, speed:0.95, chin:0.92, cardio:1.0 },
     sp:{ name:"PATADA ALTA", kind:"strike", st:12, ac:5, rc:16, range:34, dmg:30, hs:30, kb:4.5, knock:true, unblock:true, pose:"spin", big:true, sta:24 } },
-  { id:"chaman", name:"«Chamán» Pedreira", short:"CHAMÁN", style:"Kickboxing", cls:"Semipesado", kg:93, build:1,
+  { id:"chaman", name:"«Poatan» Pedreira", short:"POATAN", style:"Kickboxing", cls:"Semipesado", kg:93, build:1,
     desc:"Brasileño, excampeón de kickboxing. El gancho de izquierda más temido del planeta. En el suelo flojea.",
     skin:"#9c6a45", hair:"#111111", shorts:"#e8e8e8", trim:"#009c3b", gloves:"#111111", alt:"#ffd400",
     stats:{ punch:1.4, kick:1.3, td:0.7, sub:0.7, speed:0.95, chin:0.82, cardio:0.9 },
@@ -292,7 +339,7 @@ const ROSTER = [
     skin:"#eed0b6", hair:"#7a5536", shorts:"#0d0d0d", trim:"#c8102e", gloves:"#2a2a2a", alt:"#1f4fa8",
     stats:{ punch:1.25, kick:0.9, td:1.15, sub:1.25, speed:0.92, chin:0.78, cardio:1.0 },
     sp:{ name:"MAZO SIBERIANO", kind:"strike", st:12, ac:4, rc:18, range:25, dmg:33, hs:30, kb:4.5, knock:true, unblock:true, pose:"punch", big:true, sta:24, ko:0.16 } },
-  { id:"huesos", name:"«Huesos» Jordan", short:"HUESOS", style:"Lucha y codazos", cls:"Pesado", kg:110, build:1,
+  { id:"huesos", name:"«Bones» Jordan", short:"BONES", style:"Lucha y codazos", cls:"Pesado", kg:110, build:1,
     desc:"Para muchos, el mejor de la historia: brazos larguísimos, codazos giratorios y lucha de élite.",
     skin:"#6b4429", hair:"#111111", shorts:"#111111", trim:"#e0e0e0", gloves:"#111111", alt:"#c8102e",
     stats:{ punch:1.15, kick:1.25, td:1.35, sub:1.15, speed:1.0, chin:0.82, cardio:1.15 },
@@ -570,6 +617,7 @@ addEventListener("keyup", e => keys.delete(e.code));
 addEventListener("blur", () => { keys.clear(); if (game && !game.demo && game.phase !== "end") pauseOn(); });
 document.querySelectorAll(".tb").forEach(b => {
   const a = b.dataset.act;
+  if (a === "pause") { b.addEventListener("pointerdown", e => { e.preventDefault(); togglePause(); }); return; }
   const on = e => { e.preventDefault(); audio(); touchHeld.add(a); touchHit.add(a); b.classList.add("on"); };
   const off = e => { e.preventDefault(); touchHeld.delete(a); b.classList.remove("on"); };
   b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off);
@@ -593,11 +641,11 @@ function makeFighter(def, side, ctrl, alt){
     cd: 0, mp: 99, recent: [],
     st: { thrown: 0, landed: 0, td: 0, kd: 0, mount: 0 } };
 }
-function newGame(d0, d1, ctrl1, demo){
+function newGame(d0, d1, ctrl1, demo, rounds=3){
   const f0 = makeFighter(d0, 0, demo ? "cpu" : "p1", false);
   const f1 = makeFighter(d1, 1, ctrl1, d0 === d1);
   game = { demo, phase: "intro", t: 0, round: 1, timer: ROUNDT, f: [f0, f1], parts: [], texts: [], banner: null,
-    shake: 0, hitstop: 0, rd: [[0,0],[0,0],[0,0]], rkd: [[0,0],[0,0],[0,0]], sub: null, gnd: null, fc: 0, result: null,
+    shake: 0, hitstop: 0, rounds, rd: Array.from({ length: rounds }, () => [0, 0]), rkd: Array.from({ length: rounds }, () => [0, 0]), sub: null, gnd: null, fc: 0, result: null,
     diff: demo ? "normal" : diff };
   if (!demo) sfx.bell();
 }
@@ -779,7 +827,7 @@ function updateSub(){
 }
 
 function readInput(f){
-  if (f.ctrl === "p1") return humanInput(mode === "1p" ? MAP.solo : MAP.p1, true);
+  if (f.ctrl === "p1") return humanInput(mode !== "2p" ? MAP.solo : MAP.p1, true);
   if (f.ctrl === "p2") return humanInput(MAP.p2, false);
   return cpuInput(f, game.f[1 - f.side]);
 }
@@ -904,7 +952,7 @@ function endFight(winner, method, detail=""){
 }
 function decision(){
   const cards = [0, 1, 2].map(() => [0, 0]);
-  for (let r = 0; r < ROUNDS; r++) {
+  for (let r = 0; r < game.rounds; r++) {
     for (const c of cards) {
       const s0 = game.rd[r][0] + 8 * game.rkd[r][0] + rnd(-4, 4), s1 = game.rd[r][1] + 8 * game.rkd[r][1] + rnd(-4, 4);
       const diffR = Math.abs(s0 - s1);
@@ -918,8 +966,12 @@ function decision(){
   if (v0 > v1 && v0 >= 2) { winner = 0; method = v0 === 3 ? "DECISIÓN UNÁNIME" : v1 === 1 ? "DECISIÓN DIVIDIDA" : "DECISIÓN MAYORITARIA"; }
   else if (v1 > v0 && v1 >= 2) { winner = 1; method = v1 === 3 ? "DECISIÓN UNÁNIME" : v0 === 1 ? "DECISIÓN DIVIDIDA" : "DECISIÓN MAYORITARIA"; }
   else method = "EMPATE";
+  if (winner < 0 && tour) {   // en el torneo no hay empates: gana quien más daño hizo
+    const t0 = game.rd.reduce((a, r) => a + r[0], 0), t1 = game.rd.reduce((a, r) => a + r[1], 0);
+    winner = t0 >= t1 ? 0 : 1; method = "DECISIÓN DIVIDIDA";
+  }
   game.phase = "end"; game.t = 0;
-  game.result = { winner, method, round: 3, clock: "5:00", cards };
+  game.result = { winner, method, round: game.rounds, clock: "5:00", cards };
   banner(winner < 0 ? "EMPATE" : "DECISIÓN", 150, "#f2c14e");
   sfx.crowd();
 }
@@ -932,7 +984,7 @@ function step(){
   if (g.banner && ++g.banner.t > g.banner.dur) g.banner = null;
   switch (g.phase) {
     case "intro":
-      if (g.t === 1) banner("ROUND " + g.round, 70, "#f2c14e", g.demo ? "" : "5:00");
+      if (g.t === 1) banner("ROUND " + g.round, 70, "#f2c14e", g.demo ? "" : tour && g.round === 1 ? tour.stageName() + " · " + g.rounds + " ROUNDS" : "5:00");
       if (g.t === 72) banner("¡A PELEAR!", 40, "#ff5a4f");
       updateFighter(a, b, false); updateFighter(b, a, false);
       if (g.t >= 100) { g.phase = "fight"; g.t = 0; }
@@ -952,7 +1004,7 @@ function step(){
     case "roundEnd":
       updateFighter(a, b, false); updateFighter(b, a, false); separate();
       if (g.t >= 110) {
-        if (g.round >= ROUNDS) decision();
+        if (g.round >= g.rounds) decision();
         else {
           g.round++; g.timer = ROUNDT; g.phase = "intro"; g.t = 0;
           for (const f of g.f) {
@@ -1012,7 +1064,7 @@ function drawHUD(){
   }
   ctx.fillStyle = "#000"; ctx.fillRect(W / 2 - 19, 2, 38, 24);
   ctx.fillStyle = "#1c2033"; ctx.fillRect(W / 2 - 18, 3, 36, 22);
-  txt("R" + g.round + "/" + ROUNDS, W / 2, 4, 8, "#a3a9bf");
+  txt("R" + g.round + "/" + g.rounds, W / 2, 4, 8, "#a3a9bf");
   txt(clockText(g.timer), W / 2, 13, 8, g.timer < 600 && g.phase === "fight" ? "#ff5a4f" : "#ffffff");
   if (g.demo) txt("DEMO · ELIGE MODO PARA JUGAR", W / 2, 58, 8, "#ffffff");
 }
@@ -1046,7 +1098,7 @@ function draw(){
   drawHUD();
   if (g.gnd) {
     const m = g.gnd, bw = 70, x = W / 2 - bw / 2;
-    if (m.a.ctrl !== "cpu") txt(mode === "1p" ? "A GOLPEA · S SUMISIÓN · F ESPECIAL" : "PUÑO GOLPEA · PATADA SUMISIÓN", W / 2, 46, 8, "#f2c14e");
+    if (m.a.ctrl !== "cpu") txt(mode !== "2p" && !document.body.classList.contains("touchmode") ? "A GOLPEA · S SUMISIÓN · F ESPECIAL" : "PUÑO GOLPEA · PATADA SUMISIÓN", W / 2, 46, 8, "#f2c14e");
     else if (m.d.ctrl !== "cpu" && Math.floor(g.t / 8) % 2) txt("¡MACHACA BOTONES PARA ESCAPAR!", W / 2, 46, 8, "#7fe3ff");
     ctx.fillStyle = "#000"; ctx.fillRect(x - 1, 56, bw + 2, 6);
     ctx.fillStyle = "#7fe3ff"; ctx.fillRect(x, 57, Math.round(Math.min(1, m.esc / m.need) * bw), 4);
@@ -1080,8 +1132,10 @@ function loop(now){
 }
 
 /* ---------- Pantallas ---------- */
-const screens = ["scrTitle", "scrSelect", "scrPause", "scrResult"];
-function show(id){ for (const s of screens) $(s).hidden = s !== id; }
+const screens = ["scrTitle", "scrSelect", "scrTour", "scrPause", "scrResult"];
+function show(id){ for (const s of screens) $(s).hidden = s !== id; document.body.classList.toggle("fighting", id === null); touchHeld.clear(); }
+if (matchMedia("(pointer: coarse)").matches) document.body.classList.add("touchmode");
+addEventListener("touchstart", () => document.body.classList.add("touchmode"), { once: true, passive: true });
 function setDiff(d){ diff = d; document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c.dataset.d === d))); }
 document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => setDiff(c.dataset.d)));
 
@@ -1119,6 +1173,12 @@ function refreshSelect(){
     c.querySelector(".b1").hidden = picks[0] !== i; const b2 = c.querySelector(".b2"); b2.hidden = picks[1] !== i;
     b2.textContent = mode === "1p" ? "CPU" : "J2";
   });
+  if (mode === "tour") {
+    $("pickMsg").innerHTML = picks[0] === null ? 'Torneo: elige a tu <span class="c1">luchador</span>' : "Torneo con " + ROSTER[picks[0]].name + ": 8 luchadores, la final a 5 rounds";
+    $("bFight").disabled = picks[0] === null; $("bFight").textContent = "Ver el cuadro"; $("bRandom").hidden = true;
+    return;
+  }
+  $("bFight").textContent = "¡A la jaula!";
   const who2 = mode === "1p" ? "rival (CPU)" : "Jugador 2";
   $("pickMsg").innerHTML = picking === 0 ? '<span class="c1">Jugador 1</span>, elige luchador'
     : picks[1] === null ? 'Ahora elige al <span class="c2">' + who2 + "</span>" : "¡Listos! Entrad a la jaula";
@@ -1128,26 +1188,109 @@ function refreshSelect(){
 function choose(i){
   audio();
   showDetail(i);
+  if (mode === "tour") { picks[0] = i; refreshSelect(); $("bFight").focus(); return; }
   if (picking === 0) { picks[0] = i; picking = 1; }
   else { picks[1] = i; }
   refreshSelect();
   if (picks[1] !== null) $("bFight").focus();
 }
 function openSelect(m){
-  audio(); mode = m; picks = [null, null]; picking = 0; show("scrSelect"); refreshSelect();
+  audio(); mode = m; picks = [null, null]; picking = 0; tour = null; show("scrSelect"); refreshSelect();
 }
 function fight(){
+  if (mode === "tour") { if (picks[0] !== null) startTour(picks[0]); return; }
   if (picks[0] === null || picks[1] === null) return;
   lastSetup = { a: ROSTER[picks[0]], b: ROSTER[picks[1]], ctrl: mode === "1p" ? "cpu" : "p2" };
   show(null); paused = false; keys.clear(); pressed.clear();
   newGame(lastSetup.a, lastSetup.b, lastSetup.ctrl, false);
   cv.focus?.();
 }
+/* ---------- Torneo: 8 luchadores, cuartos, semis y final a 5 rounds ---------- */
+let tour = null;
+const STAGES = ["CUARTOS DE FINAL", "SEMIFINAL", "FINAL"];
+const rating = d => { const t = d.stats; return t.punch + t.kick * 0.8 + t.td * 0.9 + t.sub * 0.7 + t.speed * 0.8 + (2 - t.chin) + t.cardio * 0.8; };
+const shortMethod = r => r.cards ? "Dec." : r.method === "SUMISIÓN" ? "Sum." : r.method;
+function startTour(meIdx){
+  const others = ROSTER.map((_, i) => i).filter(i => i !== meIdx).sort(() => Math.random() - 0.5).slice(0, 7);
+  const field = [meIdx, ...others].sort(() => Math.random() - 0.5);
+  tour = { me: meIdx, stage: 0, rounds: [field.map(i => ({ i, res: null }))], out: false, champ: false,
+    stageName(){ return STAGES[this.stage]; } };
+  showBracket();
+}
+function simBout(a, b){
+  const ra = rating(ROSTER[a]) + rnd(-1.2, 1.2), rb = rating(ROSTER[b]) + rnd(-1.2, 1.2);
+  const w = ra >= rb ? a : b, r = Math.random();
+  const how = r < 0.3 ? "KO" : r < 0.5 ? "TKO" : r < 0.65 ? "Sum." : "Dec.";
+  return { w, how };
+}
+function myBout(){
+  const list = tour.rounds[tour.stage];
+  const k = list.findIndex(e => e.i === tour.me);
+  return { k, opp: list[k ^ 1].i };
+}
+function advanceStage(myResult){
+  const list = tour.rounds[tour.stage], next = [];
+  for (let k = 0; k < list.length; k += 2) {
+    const A = list[k], B = list[k + 1];
+    let w, how;
+    if (A.i === tour.me || B.i === tour.me) { w = myResult.won ? tour.me : (A.i === tour.me ? B.i : A.i); how = myResult.how; }
+    else ({ w, how } = simBout(A.i, B.i));
+    (A.i === w ? A : B).res = "won"; (A.i === w ? B : A).res = "lost";
+    (A.i === w ? A : B).how = how;
+    next.push({ i: w, res: null });
+  }
+  if (!myResult.won) { tour.out = true; tour.lostAt = tour.stage; }
+  if (next.length === 1) { tour.champ = myResult.won; tour.rounds.push(next); return; }
+  tour.rounds.push(next); tour.stage++;
+}
+function showBracket(){
+  const B = $("bracket"); B.innerHTML = "";
+  const titles = ["Cuartos", "Semifinal", "Final"];
+  for (let st = 0; st < 3; st++) {
+    const col = document.createElement("div"); col.className = "bcol";
+    col.insertAdjacentHTML("beforeend", "<h4>" + titles[st] + (st === 2 ? " · 5 rounds" : " · 3 rounds") + "</h4>");
+    const list = tour.rounds[st];
+    const n = 4 >> st, bm = document.createElement("div"); bm.className = "bm"; col.appendChild(bm);
+    for (let m = 0; m < n; m++) {
+      const row = e => {
+        if (!e) return '<div class="tbd"><span>Por decidir</span></div>';
+        const d = ROSTER[e.i], cls = e.i === tour.me ? "me" : "";
+        return '<div class="' + (e.res || "") + '"><span class="' + cls + '">' + d.short + (e.i === tour.me ? " (TÚ)" : "") + "</span><small>" + d.kg + " kg" + (e.how ? " · " + e.how : "") + "</small></div>";
+      };
+      const A = list && list[m * 2], Bb = list && list[m * 2 + 1];
+      bm.insertAdjacentHTML("beforeend", '<div class="match">' + row(A) + row(Bb) + "</div>");
+    }
+    B.appendChild(col);
+  }
+  const champ = tour.rounds[3] && tour.rounds[3][0];
+  if (tour.champ) { $("tTitle").textContent = "¡CAMPEÓN DEL TORNEO!"; $("tMsg").textContent = "Has ganado los tres combates con " + ROSTER[tour.me].name + "."; $("tGo").textContent = "Nuevo torneo"; }
+  else if (tour.out) { $("tTitle").textContent = "ELIMINADO"; $("tMsg").textContent = "Caíste en " + (tour.lostAt === 2 ? "la final" : tour.lostAt === 1 ? "la semifinal" : "cuartos de final") + "." + (champ ? " Campeón: " + ROSTER[champ.i].name + "." : ""); $("tGo").textContent = "Nuevo torneo"; }
+  else { const { opp } = myBout(); $("tTitle").textContent = STAGES[tour.stage]; $("tMsg").textContent = "Tu rival: " + ROSTER[opp].name + " (" + ROSTER[opp].cls + ", " + ROSTER[opp].kg + " kg)" + (tour.stage === 2 ? ". La final es a 5 rounds." : "."); $("tGo").textContent = "¡A pelear!"; }
+  show("scrTour"); $("tGo").focus();
+}
+function finishTourBracket(){
+  // si te eliminan, el resto del torneo se simula para saber quién gana
+  while (tour.rounds[tour.rounds.length - 1].length > 1) {
+    const list = tour.rounds[tour.rounds.length - 1], next = [];
+    for (let k = 0; k < list.length; k += 2) {
+      const A = list[k], B = list[k + 1], { w, how } = simBout(A.i, B.i);
+      (A.i === w ? A : B).res = "won"; (A.i === w ? B : A).res = "lost"; (A.i === w ? A : B).how = how;
+      next.push({ i: w, res: null });
+    }
+    tour.rounds.push(next);
+  }
+}
+function tourFight(){
+  const { opp } = myBout();
+  lastSetup = { a: ROSTER[tour.me], b: ROSTER[opp], ctrl: "cpu", rounds: tour.stage === 2 ? 5 : 3 };
+  show(null); paused = false; keys.clear(); pressed.clear();
+  newGame(lastSetup.a, lastSetup.b, "cpu", false, lastSetup.rounds);
+}
 function showResult(){
   const r = game.result, g = game;
   const nm = i => g.f[i].def.name + (g.f[i].ctrl === "cpu" ? " (CPU)" : g.f[i].ctrl === "p1" ? " (J1)" : " (J2)");
   $("rTitle").textContent = r.winner < 0 ? "EMPATE" : "GANA " + nm(r.winner).toUpperCase();
-  $("rHow").textContent = r.cards ? r.method.charAt(0) + r.method.slice(1).toLowerCase() + " tras 3 rounds"
+  $("rHow").textContent = r.cards ? r.method.charAt(0) + r.method.slice(1).toLowerCase() + " tras " + g.rounds + " rounds"
     : "Por " + (r.method === "SUMISIÓN" ? "sumisión (" + r.detail.toLowerCase() + ")" : r.method === "TKO" ? "TKO (" + r.detail + ")" : r.detail === "directo" ? "KO directo" : "KO") + " · Round " + r.round + " · " + r.clock;
   const J = $("rJudges"); J.innerHTML = "";
   if (r.cards) {
@@ -1166,24 +1309,36 @@ function showResult(){
     "<tr><td>" + a.st.td + "</td><th>Derribos</th><td>" + b.st.td + "</td></tr>" +
     "<tr><td>" + a.st.kd + "</td><th>Caídas por golpe</th><td>" + b.st.kd + "</td></tr>" +
     "<tr><td>" + a.st.mount + "</td><th>Montadas</th><td>" + b.st.mount + "</td></tr>";
-  show("scrResult"); $("bAgain").focus();
+  const inTour = !!tour && !tour.out && !tour.champ;
+  $("bNext").hidden = !inTour; $("bAgain").hidden = inTour; $("bPick").hidden = inTour;
+  if (inTour) {
+    const won = r.winner === 0;
+    advanceStage({ won, how: shortMethod(r) });
+    if (tour.out) finishTourBracket();
+    $("bNext").textContent = tour.champ ? "¡Ver el título!" : won ? "Siguiente combate" : "Ver el cuadro";
+  }
+  show("scrResult"); (inTour ? $("bNext") : $("bAgain")).focus();
 }
 function pauseOn(){ if (!game || game.demo || paused) return; paused = true; show("scrPause"); $("bResume").focus(); }
 function togglePause(){
   if (!game || game.demo) return;
-  if (!$("scrResult").hidden || !$("scrSelect").hidden || !$("scrTitle").hidden) return;
+  if (!$("scrResult").hidden || !$("scrSelect").hidden || !$("scrTitle").hidden || !$("scrTour").hidden) return;
   if (paused) { paused = false; show(null); } else pauseOn();
 }
-function toMenu(){ paused = false; show("scrTitle"); startDemo(); }
+function toMenu(){ paused = false; tour = null; show("scrTitle"); startDemo(); }
 
 $("b1p").addEventListener("click", () => openSelect("1p"));
 $("b2p").addEventListener("click", () => openSelect("2p"));
-$("bBack").addEventListener("click", () => { if (picking === 1) { picking = 0; picks = [null, null]; refreshSelect(); } else show("scrTitle"); });
+$("bTour").addEventListener("click", () => openSelect("tour"));
+$("tMenu").addEventListener("click", toMenu);
+$("tGo").addEventListener("click", () => { if (tour.out || tour.champ) openSelect("tour"); else tourFight(); });
+$("bNext").addEventListener("click", showBracket);
+$("bBack").addEventListener("click", () => { if (mode === "tour") { show("scrTitle"); return; } if (picking === 1) { picking = 0; picks = [null, null]; refreshSelect(); } else show("scrTitle"); });
 $("bRandom").addEventListener("click", () => { if (picks[0] === null) picks[0] = Math.floor(Math.random() * ROSTER.length); picking = 1; picks[1] = Math.floor(Math.random() * ROSTER.length); refreshSelect(); });
 $("bFight").addEventListener("click", fight);
 $("bResume").addEventListener("click", () => { paused = false; show(null); });
 $("bQuit").addEventListener("click", toMenu);
-$("bAgain").addEventListener("click", () => { show(null); newGame(lastSetup.a, lastSetup.b, lastSetup.ctrl, false); });
+$("bAgain").addEventListener("click", () => { show(null); newGame(lastSetup.a, lastSetup.b, lastSetup.ctrl, false, lastSetup.rounds || 3); });
 $("bPick").addEventListener("click", () => openSelect(mode));
 $("bMenu").addEventListener("click", toMenu);
 $("bMute").addEventListener("click", () => { audio(); muted = !muted; $("bMute").textContent = "Sonido: " + (muted ? "no" : "sí"); });
